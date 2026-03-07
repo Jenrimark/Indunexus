@@ -1,0 +1,142 @@
+{
+  "samples": [
+    {
+      "keyword": "方向盘",
+      "description": "方向盘系列 - 2个相似零件",
+      "parts": [
+        {
+          "id": "69c7f951-520a-4752-ba11-8c7c2972759e",
+          "name": "方向盘标准型",
+          "partNumber": "方-7094-0",
+          "brand": "天合",
+          "categoryId": "bedee859-1d96-4c08-8f9e-0eaab0c89073",
+          "price": 4243.92,
+          "stock": 26,
+          "images": {
+            "thumbnail": "/drawings/147 .jpg",
+            "fullSize": ["/drawings/147 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/147 .jpg",
+          "confidence": 0.95
+        },
+        {
+          "id": "5655b4b7-fdb9-496e-a008-c58a9c3f2e9d",
+          "name": "方向盘增强型",
+          "partNumber": "方-9368-1",
+          "brand": "大陆",
+          "categoryId": "bedee859-1d96-4c08-8f9e-0eaab0c89073",
+          "price": 270.74,
+          "stock": 139,
+          "images": {
+            "thumbnail": "/drawings/148 .jpg",
+            "fullSize": ["/drawings/148 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/148 .jpg",
+          "confidence": 0.87
+        }
+      ]
+    },
+    {
+      "keyword": "前照灯",
+      "description": "前照灯系列 - 3个相似零件",
+      "parts": [
+        {
+          "id": "d9ef5b08-f5a2-442a-a64a-9ac93e4eb112",
+          "name": "前照灯标准型",
+          "partNumber": "前-4694-0",
+          "brand": "麦格纳",
+          "categoryId": "eb0499f9-d0a3-40dc-b100-090e9e4362bd",
+          "price": 2785.78,
+          "stock": 383,
+          "images": {
+            "thumbnail": "/drawings/155 .jpg",
+            "fullSize": ["/drawings/155 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/155 .jpg",
+          "confidence": 0.92
+        },
+        {
+          "id": "4cbb4ae2-a34c-4d79-97e1-866cfa148c04",
+          "name": "前照灯增强型",
+          "partNumber": "前-4612-1",
+          "brand": "斯坦雷",
+          "categoryId": "eb0499f9-d0a3-40dc-b100-090e9e4362bd",
+          "price": 1164.35,
+          "stock": 151,
+          "images": {
+            "thumbnail": "/drawings/156 .jpg",
+            "fullSize": ["/drawings/156 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/156 .jpg",
+          "confidence": 0.89
+        },
+        {
+          "id": "55788824-ce77-42a7-88b4-9c635f587ac8",
+          "name": "前照灯高性能型",
+          "partNumber": "前-9525-2",
+          "brand": "小糸",
+          "categoryId": "eb0499f9-d0a3-40dc-b100-090e9e4362bd",
+          "price": 3758.30,
+          "stock": 166,
+          "images": {
+            "thumbnail": "/drawings/157 .jpg",
+            "fullSize": ["/drawings/157 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/157 .jpg",
+          "confidence": 0.85
+        }
+      ]
+    },
+    {
+      "keyword": "轮胎",
+      "description": "轮胎系列 - 3个相似零件",
+      "parts": [
+        {
+          "id": "f8e6c160-559f-453b-bc53-e1b2ef115da8",
+          "name": "轮胎车轮标准型",
+          "partNumber": "轮-2099-0",
+          "brand": "博世",
+          "categoryId": "d44b6501-0826-4ba3-856d-b1a8b7a5c881",
+          "price": 1737.70,
+          "stock": 461,
+          "images": {
+            "thumbnail": "/drawings/105 .jpg",
+            "fullSize": ["/drawings/105 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/105 .jpg",
+          "confidence": 0.94
+        },
+        {
+          "id": "9a092117-1880-4ec4-ba9c-739cd5085fd3",
+          "name": "轮胎车轮增强型",
+          "partNumber": "轮-4186-1",
+          "brand": "天合",
+          "categoryId": "d44b6501-0826-4ba3-856d-b1a8b7a5c881",
+          "price": 2551.62,
+          "stock": 182,
+          "images": {
+            "thumbnail": "/drawings/106 .jpg",
+            "fullSize": ["/drawings/106 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/106 .jpg",
+          "confidence": 0.91
+        },
+        {
+          "id": "bdc73aee-92d1-484c-8689-57ad74fd2dad",
+          "name": "轮胎标准型",
+          "partNumber": "轮-8603-0",
+          "brand": "布雷博",
+          "categoryId": "dad282c4-9afc-4f0a-9e52-6dcc22a0158d",
+          "price": 3792.67,
+          "stock": 228,
+          "images": {
+            "thumbnail": "/drawings/139 .jpg",
+            "fullSize": ["/drawings/139 .jpg"]
+          },
+          "technicalDrawingUrl": "/drawings/139 .jpg",
+          "confidence": 0.88
+        }
+      ]
+    }
+  ]
+}

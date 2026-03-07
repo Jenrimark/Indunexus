@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>清除本地存储 - InduNexus</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #0369A1;
+      margin-bottom: 20px;
+    }
+    .info {
+      background: #E0F2FE;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #0369A1;
+    }
+    .warning {
+      background: #FEF3C7;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 4px solid #F59E0B;
+    }
+    button {
+      background: #0369A1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    button:hover {
+      background: #075985;
+    }
+    button.secondary {
+      background: #64748B;
+    }
+    button.secondary:hover {
+      background: #475569;
+    }
+    .success {
+      background: #D1FAE5;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      border-left: 4px solid #10B981;
+      display: none;
+    }
+    .storage-info {
+      margin-top: 20px;
+      padding: 15px;
+      background: #F8FAFC;
+      border-radius: 8px;
+    }
+    .storage-item {
+      padding: 8px 0;
+      border-bottom: 1px solid #E2E8F0;
+    }
+    .storage-item:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 清除本地存储</h1>
+    
+    <div class="info">
+      <strong>说明：</strong>由于图片路径已更新，需要清除浏览器中存储的旧数据，以便显示新的图片。
+    </div>
+
+    <div class="warning">
+      <strong>⚠️ 注意：</strong>清除后，您的收藏和购物车数据将被清空。订单数据存储在服务器上不会丢失。
+    </div>
+
+    <div class="storage-info">
+      <h3>当前存储的数据：</h3>
+      <div id="storageList"></div>
+    </div>
+
+    <div style="margin-top: 20px;">
+      <button onclick="clearStorage()">清除本地存储</button>
+      <button class="secondary" onclick="window.location.href='/'">返回首页</button>
+    </div>
+
+    <div class="success" id="successMessage">
+      ✅ 本地存储已清除！请返回首页刷新页面。
+    </div>
+  </div>
+
+  <script>
+    // 显示当前存储的数据
+    function displayStorage() {
+      const list = document.getElementById('storageList');
+      const keys = Object.keys(localStorage);
+      
+      if (keys.length === 0) {
+        list.innerHTML = '<div class="storage-item">暂无存储数据</div>';
+        return;
+      }
+
+      list.innerHTML = keys.map(key => {
+        const value = localStorage.getItem(key);
+        let size = new Blob([value]).size;
+        let sizeStr = size < 1024 ? `${size} B` : `${(size / 1024).toFixed(2)} KB`;
+        return `<div class="storage-item"><strong>${key}</strong>: ${sizeStr}</div>`;
+      }).join('');
+    }
+
+    // 清除本地存储
+    function clearStorage() {
+      if (confirm('确定要清除本地存储吗？收藏和购物车数据将被清空。')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        document.getElementById('successMessage').style.display = 'block';
+        displayStorage();
+      }
+    }
+
+    // 页面加载时显示存储信息
+    displayStorage();
+  </script>
+</body>
+</html>

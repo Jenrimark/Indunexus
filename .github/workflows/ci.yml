@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  web:
+    name: Web Build
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: indunexus-web/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./indunexus-web
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./indunexus-web
+      run: npm run build
+
+  api:
+    name: API Test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+        cache-dependency-path: indunexus-api/requirements.txt
+    
+    - name: Install dependencies
+      working-directory: ./indunexus-api
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
