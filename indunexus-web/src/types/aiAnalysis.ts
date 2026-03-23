@@ -32,6 +32,13 @@ export const WORKFLOW_NODES: Array<{ id: string; name: string }> = [
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
+export interface PartStandard {
+  type: string;
+  code: string;
+  name: string;
+  region: string;
+}
+
 export interface FullRecognitionResult {
   /** 零件大类 */
   category: string;
@@ -54,6 +61,14 @@ export interface FullRecognitionResult {
     confidence: number;
     matched_features: string[];
   }>;
+  /** 零件用途说明 */
+  usage_description?: string;
+  /** 国内外标准对照 */
+  standards?: PartStandard[];
+  /** 参数说明（key 与 specs 对齐） */
+  param_notes?: Record<string, string>;
+  /** 选型建议 */
+  selection_tips?: string[];
 }
 
 export interface SupplyChainData {

@@ -1,53 +1,44 @@
 <template>
   <div class="decision-report">
-    <!-- 磨损程度评级卡片 -->
-    <div class="report-card">
-      <h3 class="section-title">磨损评级</h3>
-      <div class="wear-level-display">
-        <div
-          class="wear-badge"
-          :style="{
-            background: wearColor + '18',
-            borderColor: wearColor + '50',
-            color: wearColor,
-          }"
-        >
-          <span class="wear-dot" :style="{ background: wearColor }"></span>
-          <span class="wear-label">{{ wearLabel }}</span>
-        </div>
-        <div class="wear-bar-track">
+    <!-- 磨损评级 + 处置建议并列 -->
+    <div class="top-row">
+      <!-- 磨损程度评级 -->
+      <div class="report-card">
+        <h3 class="section-title">磨损评级</h3>
+        <div class="wear-level-display">
           <div
-            class="wear-bar-fill"
-            :style="{ width: wearBarWidth, background: wearColor }"
-          ></div>
+            class="wear-badge"
+            :style="{ background: wearColor + '18', borderColor: wearColor + '50', color: wearColor }"
+          >
+            <span class="wear-dot" :style="{ background: wearColor }"></span>
+            <span class="wear-label">{{ wearLabel }}</span>
+          </div>
+          <div class="wear-bar-track">
+            <div class="wear-bar-fill" :style="{ width: wearBarWidth, background: wearColor }"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 处置建议 -->
+      <div class="report-card">
+        <h3 class="section-title">处置建议</h3>
+        <div
+          class="recommendation-display"
+          :style="{ background: wearColor + '10', borderColor: wearColor + '40' }"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" class="rec-icon" :style="{ color: wearColor }">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+          </svg>
+          <span class="rec-text">{{ recommendationLabel }}</span>
         </div>
       </div>
     </div>
 
-    <!-- 处置建议卡片 -->
-    <div class="report-card">
-      <h3 class="section-title">处置建议</h3>
-      <div
-        class="recommendation-display"
-        :style="{
-          background: wearColor + '10',
-          borderColor: wearColor + '40',
-        }"
-      >
-        <svg viewBox="0 0 20 20" fill="currentColor" class="rec-icon" :style="{ color: wearColor }">
-          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-        </svg>
-        <span class="rec-text">{{ recommendationLabel }}</span>
-      </div>
-    </div>
-
-    <!-- 推荐供应商列表 -->
+    <!-- 推荐供应商（两列） -->
     <div class="report-card">
       <h3 class="section-title">推荐供应商</h3>
-      <div v-if="report.suppliers.length === 0" class="empty-suppliers">
-        暂无推荐供应商
-      </div>
-      <ul v-else class="supplier-list">
+      <div v-if="report.suppliers.length === 0" class="empty-suppliers">暂无推荐供应商</div>
+      <ul v-else class="supplier-grid">
         <li
           v-for="supplier in report.suppliers.slice(0, 3)"
           :key="supplier.name"
@@ -145,6 +136,17 @@ const recommendationLabel = computed(
   gap: var(--space-md, 16px);
 }
 
+/* ── 磨损+处置并列行 ── */
+.top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md, 16px);
+  align-items: start;
+}
+@media (max-width: 560px) {
+  .top-row { grid-template-columns: 1fr; }
+}
+
 /* ── 通用卡片 ── */
 .report-card {
   background: white;
@@ -189,9 +191,7 @@ const recommendationLabel = computed(
   flex-shrink: 0;
 }
 
-.wear-label {
-  line-height: 1;
-}
+.wear-label { line-height: 1; }
 
 .wear-bar-track {
   height: 8px;
@@ -216,19 +216,10 @@ const recommendationLabel = computed(
   border: 1px solid;
 }
 
-.rec-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
+.rec-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.rec-text { font-size: 1rem; font-weight: 600; color: var(--color-primary, #0f172a); }
 
-.rec-text {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-primary, #0f172a);
-}
-
-/* ── 供应商列表 ── */
+/* ── 供应商两列 ── */
 .empty-suppliers {
   font-size: 0.875rem;
   color: #94a3b8;
@@ -236,13 +227,16 @@ const recommendationLabel = computed(
   padding: var(--space-md, 16px) 0;
 }
 
-.supplier-list {
+.supplier-grid {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-sm, 8px);
+}
+@media (max-width: 560px) {
+  .supplier-grid { grid-template-columns: 1fr; }
 }
 
 .supplier-item {
@@ -275,7 +269,7 @@ const recommendationLabel = computed(
 }
 
 .supplier-name {
-  font-size: 0.9375rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-primary, #0f172a);
   white-space: nowrap;
@@ -283,53 +277,29 @@ const recommendationLabel = computed(
   text-overflow: ellipsis;
 }
 
-.supplier-stars {
-  display: flex;
-  gap: 2px;
-}
-
-.star-icon {
-  width: 14px;
-  height: 14px;
-}
-
-.star-filled {
-  color: #f59e0b;
-}
-
-.star-empty {
-  color: #e2e8f0;
-}
+.supplier-stars { display: flex; gap: 2px; }
+.star-icon { width: 12px; height: 12px; }
+.star-filled { color: #f59e0b; }
+.star-empty { color: #e2e8f0; }
 
 .supplier-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
-.supplier-price {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-primary, #0f172a);
-}
-
-.supplier-lead {
-  font-size: 0.75rem;
-  color: #64748b;
-  white-space: nowrap;
-}
+.supplier-price { font-size: 0.875rem; font-weight: 700; color: var(--color-primary, #0f172a); }
+.supplier-lead { font-size: 0.6875rem; color: #64748b; white-space: nowrap; }
 
 .supplier-arrow {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   color: #94a3b8;
   flex-shrink: 0;
   transition: color 200ms ease;
 }
 
-.supplier-item:hover .supplier-arrow {
-  color: var(--color-cta, #0369a1);
-}
+.supplier-item:hover .supplier-arrow { color: var(--color-cta, #0369a1); }
 </style>

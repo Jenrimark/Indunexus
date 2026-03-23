@@ -22,39 +22,34 @@
       </nav>
     </div>
 
-    <!-- 关联零件列表 -->
-    <div class="panel-section">
-      <h3 class="section-title">关联零件</h3>
-      <ul v-if="data.relatedParts.length > 0" class="parts-list">
-        <li
-          v-for="part in data.relatedParts.slice(0, 3)"
-          :key="part.partId"
-          class="part-item"
-        >
-          <span class="part-name">{{ part.partName }}</span>
-          <span class="part-number">{{ part.partNumber }}</span>
-        </li>
-      </ul>
-      <p v-else class="empty-hint">暂无关联零件</p>
-    </div>
+    <!-- 关联零件 + 可替代零件并列 -->
+    <div class="parts-row">
+      <!-- 关联零件 -->
+      <div class="panel-section">
+        <h3 class="section-title">关联零件</h3>
+        <ul v-if="data.relatedParts.length > 0" class="parts-list">
+          <li v-for="part in data.relatedParts.slice(0, 3)" :key="part.partId" class="part-item">
+            <span class="part-name">{{ part.partName }}</span>
+            <span class="part-number">{{ part.partNumber }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-hint">暂无关联零件</p>
+      </div>
 
-    <!-- 可替代零件列表 -->
-    <div class="panel-section">
-      <h3 class="section-title">可替代零件</h3>
-      <ul v-if="data.alternatives.length > 0" class="parts-list">
-        <li
-          v-for="alt in data.alternatives.slice(0, 3)"
-          :key="alt.partId"
-          class="part-item"
-        >
-          <div class="part-main">
-            <span class="part-name">{{ alt.partName }}</span>
-            <span class="part-number">{{ alt.partNumber }}</span>
-          </div>
-          <span class="part-reason">{{ alt.reason }}</span>
-        </li>
-      </ul>
-      <p v-else class="empty-hint">暂无可替代零件</p>
+      <!-- 可替代零件 -->
+      <div class="panel-section">
+        <h3 class="section-title">可替代零件</h3>
+        <ul v-if="data.alternatives.length > 0" class="parts-list">
+          <li v-for="alt in data.alternatives.slice(0, 3)" :key="alt.partId" class="part-item">
+            <div class="part-main">
+              <span class="part-name">{{ alt.partName }}</span>
+              <span class="part-number">{{ alt.partNumber }}</span>
+            </div>
+            <span class="part-reason">{{ alt.reason }}</span>
+          </li>
+        </ul>
+        <p v-else class="empty-hint">暂无可替代零件</p>
+      </div>
     </div>
   </div>
 </template>
@@ -74,6 +69,17 @@ defineProps<Props>();
   display: flex;
   flex-direction: column;
   gap: var(--space-md, 16px);
+}
+
+/* ── 并列行 ── */
+.parts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md, 16px);
+  align-items: start;
+}
+@media (max-width: 560px) {
+  .parts-row { grid-template-columns: 1fr; }
 }
 
 /* ── 区域 ── */

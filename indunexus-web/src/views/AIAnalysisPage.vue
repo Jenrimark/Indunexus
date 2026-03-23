@@ -87,18 +87,26 @@
           />
         </div>
 
-        <!-- 右侧：结果面板 -->
+        <!-- 右侧：结果面板（两列网格） -->
         <div class="right-col">
           <template v-if="store.analysisResult">
-            <RecognitionResult
-              :result="store.analysisResult.recognitionResult"
-            />
-            <SupplyChainPanel :data="store.analysisResult.supplyChainData" />
-            <KnowledgeGraphPanel :data="store.analysisResult.knowledgeGraphData" />
-            <DecisionReport
-              :report="store.analysisResult.decisionReport"
-              @supplier-click="onSupplierClick"
-            />
+            <div class="results-grid">
+              <!-- 结果左列：识别结果 -->
+              <div class="results-left">
+                <RecognitionResult
+                  :result="store.analysisResult.recognitionResult"
+                />
+              </div>
+              <!-- 结果右列：供应链 + 知识图谱 + 决策报告 -->
+              <div class="results-right">
+                <SupplyChainPanel :data="store.analysisResult.supplyChainData" />
+                <KnowledgeGraphPanel :data="store.analysisResult.knowledgeGraphData" />
+                <DecisionReport
+                  :report="store.analysisResult.decisionReport"
+                  @supplier-click="onSupplierClick"
+                />
+              </div>
+            </div>
           </template>
 
           <!-- 空状态占位 -->
@@ -230,13 +238,14 @@ function onReanalyze(record: AnalysisRecord) {
 
 <style scoped>
 .ai-analysis-page {
-  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
   padding: var(--space-lg, 24px) var(--space-xl, 32px);
   padding-top: calc(var(--header-height, 64px) + var(--space-lg, 24px));
   min-height: 100vh;
   background: var(--color-background, #f8fafc);
   font-family: 'Plus Jakarta Sans', sans-serif;
+  box-sizing: border-box;
 }
 
 /* ── Page header ── */
@@ -359,7 +368,7 @@ function onReanalyze(record: AnalysisRecord) {
 /* ── Main grid ── */
 .main-grid {
   display: grid;
-  grid-template-columns: 420px 1fr;
+  grid-template-columns: 360px 1fr;
   gap: var(--space-lg, 24px);
   align-items: start;
 }
@@ -375,6 +384,8 @@ function onReanalyze(record: AnalysisRecord) {
   display: flex;
   flex-direction: column;
   gap: var(--space-md, 16px);
+  position: sticky;
+  top: calc(var(--header-height, 64px) + 24px);
 }
 
 /* ── Progress card ── */
@@ -457,6 +468,29 @@ function onReanalyze(record: AnalysisRecord) {
   display: flex;
   flex-direction: column;
   gap: var(--space-md, 16px);
+  min-width: 0;
+}
+
+/* ── Results two-column grid ── */
+.results-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md, 16px);
+  align-items: start;
+}
+
+.results-left,
+.results-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md, 16px);
+  min-width: 0;
+}
+
+@media (max-width: 1280px) {
+  .results-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Placeholder ── */
