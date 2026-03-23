@@ -16,6 +16,7 @@ import SupplierDashboard from './views/SupplierDashboard.vue'
 import AdminUsers from './views/AdminUsers.vue'
 import AdminCategories from './views/AdminCategories.vue'
 import AdminPartsManagement from './views/AdminPartsManagement.vue'
+import AdminDashboard from './views/AdminDashboard.vue'
 import Debug from './views/Debug.vue'
 
 // 路由配置
@@ -98,10 +99,22 @@ const router = createRouter({
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
+      path: '/admin/dashboard',
+      name: 'AdminDashboard',
+      component: AdminDashboard,
+      meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
       path: '/supplier',
       name: 'Supplier',
       component: SupplierDashboard,
       meta: { requiresAuth: true, requiresSupplier: true },
+    },
+    {
+      path: '/ai-analysis',
+      name: 'AIAnalysis',
+      component: () => import('./views/AIAnalysisPage.vue'),
+      meta: { requiresAuth: true, requiresBuyer: true },
     },
   ],
 })
@@ -141,6 +154,20 @@ router.beforeEach((to, _from, next) => {
   if (to.meta.requiresSupplier && user?.role !== 'supplier') {
     next('/');
     return;
+  }
+  
+  // 检查是否需要买家权限
+  if (to.meta.requiresBuyer) {
+    if (user?.role === 'buyer') {
+      next();
+      return;
+    } else if (user?.role === 'admin') {
+      next('/admin');
+      return;
+    } else if (user?.role === 'supplier') {
+      next('/supplier');
+      return;
+    }
   }
   
   // 已登录用户访问登录页，根据角色跳转

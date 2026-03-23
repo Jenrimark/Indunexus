@@ -3,15 +3,16 @@
     <Transition name="modal">
       <div v-if="isOpen" class="modal-overlay" @click="handleClose">
         <div class="modal-container" @click.stop>
+          <!-- Header -->
           <div class="modal-header">
             <div class="header-icon">
-              <svg viewBox="0 0 20 20" fill="currentColor">
-                <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
               </svg>
             </div>
             <div class="header-content">
               <h2>AI 智能识图</h2>
-              <p class="header-subtitle">基于深度学习的零部件视觉识别</p>
+              <p class="header-subtitle">上传图片，跳转至 AI 分析页面</p>
             </div>
             <button class="close-btn cursor-pointer" @click="handleClose">
               <svg viewBox="0 0 20 20" fill="currentColor">
@@ -20,83 +21,73 @@
             </button>
           </div>
 
+          <!-- Body -->
           <div class="modal-body">
-            <div
-              v-if="!uploadedImage && !isProcessing"
-              class="upload-area cursor-pointer"
-              @click="triggerFileInput"
-            >
-              <svg class="upload-icon" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clip-rule="evenodd" />
+            <!-- 错误提示 -->
+            <div v-if="errorMsg" class="alert-error" role="alert">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="alert-icon">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
               </svg>
-              <h3>上传零部件图片</h3>
-              <p>点击选择文件</p>
-              <input
-                ref="fileInput"
-                type="file"
-                accept="image/*"
-                class="file-input"
-                @change="handleFileSelect"
-              />
+              {{ errorMsg }}
             </div>
 
-            <div v-if="uploadedImage && !isProcessing" class="image-preview">
-              <img :src="uploadedImage" alt="Uploaded" />
-              <button class="reupload-btn cursor-pointer" @click="resetUpload">重新上传</button>
+            <!-- 亮度警告 -->
+            <div v-if="brightnessWarning && previewUrl" class="alert-warning" role="alert">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="alert-icon">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+              </svg>
+              <span>图片过暗，识别精度可能受影响</span>
+              <div class="warning-btns">
+                <button class="btn-warn-sec cursor-pointer" @click="reset">重新上传</button>
+                <button class="btn-warn-pri cursor-pointer" @click="proceed">继续识别</button>
+              </div>
             </div>
 
+            <!-- 上传区 -->
+            <div
+              v-if="!previewUrl"
+              class="upload-area cursor-pointer"
+              :class="{ dragging: isDragging }"
+              @click="triggerInput"
+              @dragover.prevent="isDragging = true"
+              @dragleave.prevent="isDragging = false"
+              @drop.prevent="onDrop"
+            >
+              <input ref="fileInputRef" type="file" accept="image/jpeg,image/png,image/webp" class="file-input" @change="onFileChange" />
+              <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+              <p class="upload-title">点击或拖拽图片至此处</p>
+              <p class="upload-hint">支持 JPG、PNG、WEBP，最大 10MB</p>
+            </div>
+
+            <!-- 预览 -->
+            <div v-if="previewUrl && !brightnessWarning" class="preview-wrap">
+              <img :src="previewUrl" alt="预览" class="preview-img" />
+              <button class="reupload-btn cursor-pointer" @click="reset">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+                  <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                </svg>
+                重新上传
+              </button>
+            </div>
+
+            <!-- 预处理中 -->
             <div v-if="isProcessing" class="processing-state">
-              <div class="processing-spinner"></div>
-              <h3>AI 识别中...</h3>
-              <div class="progress-bar">
-                <div class="progress-fill" :style="{ width: `${progress}%` }"></div>
-              </div>
-            </div>
-
-            <div v-if="results.length > 0" class="results-container">
-              <h3>识别结果 ({{ results.length }})</h3>
-              <p class="results-hint">根据图像特征匹配，按相似度排序</p>
-              <div
-                v-for="(result, index) in results"
-                :key="result.partId"
-                class="result-card cursor-pointer"
-                @click="selectResult(result)"
-              >
-                <div class="result-rank" :class="`rank-${index + 1}`">
-                  {{ index + 1 }}
-                </div>
-                <img :src="result.thumbnail" :alt="result.partName" />
-                <div class="result-info">
-                  <h4>{{ result.partName }}</h4>
-                  <p class="part-number">型号: {{ result.partNumber }}</p>
-                  <div class="confidence-bar">
-                    <div class="confidence-label">
-                      <span>匹配度</span>
-                      <span class="confidence-value" :class="getConfidenceClass(result.confidence)">
-                        {{ (result.confidence * 100).toFixed(0) }}%
-                      </span>
-                    </div>
-                    <div class="confidence-progress">
-                      <div 
-                        class="confidence-fill" 
-                        :class="getConfidenceClass(result.confidence)"
-                        :style="{ width: `${result.confidence * 100}%` }"
-                      ></div>
-                    </div>
-                  </div>
-                  <div class="matched-features">
-                    <span v-for="feature in result.matchedFeatures" :key="feature" class="feature-tag">
-                      {{ feature }}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <div class="spinner"></div>
+              <p>图片预处理中...</p>
             </div>
           </div>
 
-          <div v-if="uploadedImage && !isProcessing && results.length === 0" class="modal-footer">
-            <button class="cancel-btn cursor-pointer" @click="handleClose">取消</button>
-            <button class="submit-btn cursor-pointer" @click="startRecognition">开始识别</button>
+          <!-- Footer -->
+          <div v-if="previewUrl && !brightnessWarning && !isProcessing" class="modal-footer">
+            <button class="btn-cancel cursor-pointer" @click="handleClose">取消</button>
+            <button class="btn-submit cursor-pointer" @click="proceed">
+              <svg viewBox="0 0 20 20" fill="currentColor" class="btn-icon">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+              </svg>
+              开始 AI 分析
+            </button>
           </div>
         </div>
       </div>
@@ -106,102 +97,93 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { RecognitionResult } from '../types';
+import { useRouter } from 'vue-router';
+import { useImagePreprocessor, type PreprocessResult } from '../composables/useImagePreprocessor';
+import { useAiAnalysisStore } from '../stores/aiAnalysis';
 
 interface Props {
   isOpen: boolean;
 }
 
 defineProps<Props>();
-const emit = defineEmits<{
-  close: [];
-  selectResult: [result: RecognitionResult];
-}>();
+const emit = defineEmits<{ close: [] }>();
 
-const fileInput = ref<HTMLInputElement | null>(null);
-const uploadedImage = ref('');
+const router = useRouter();
+const { preprocess } = useImagePreprocessor();
+const aiStore = useAiAnalysisStore();
+
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const previewUrl = ref('');
+const errorMsg = ref('');
+const brightnessWarning = ref(false);
 const isProcessing = ref(false);
-const progress = ref(0);
-const results = ref<RecognitionResult[]>([]);
+const isDragging = ref(false);
+const preprocessed = ref<PreprocessResult | null>(null);
 
-const triggerFileInput = () => fileInput.value?.click();
+function triggerInput() { fileInputRef.value?.click(); }
 
-const handleFileSelect = (event: Event) => {
-  const file = (event.target as HTMLInputElement).files?.[0];
-  if (file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      uploadedImage.value = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  }
-};
+async function onDrop(e: DragEvent) {
+  isDragging.value = false;
+  const file = e.dataTransfer?.files?.[0];
+  if (file) await processFile(file);
+}
 
-const resetUpload = () => {
-  uploadedImage.value = '';
-  results.value = [];
-};
+async function onFileChange(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) await processFile(file);
+  if (fileInputRef.value) fileInputRef.value.value = '';
+}
 
-const startRecognition = () => {
+async function processFile(file: File) {
+  reset();
   isProcessing.value = true;
-  progress.value = 0;
-  const interval = setInterval(() => {
-    progress.value += 10;
-    if (progress.value >= 100) {
-      clearInterval(interval);
-      setTimeout(() => {
-        isProcessing.value = false;
-        // 返回三个相似的专业零件，相似度分别为 92%、80%、63%
-        results.value = [
-          {
-            partId: 'd9ef5b08-f5a2-442a-a64a-9ac93e4eb112',
-            partName: '前照灯标准型',
-            partNumber: '前-4694-0',
-            thumbnail: '/drawings/155 .jpg',
-            confidence: 0.92,
-            matchedFeatures: ['外形轮廓', '安装孔位', '透镜结构'],
-          },
-          {
-            partId: '4cbb4ae2-a34c-4d79-97e1-866cfa148c04',
-            partName: '前照灯增强型',
-            partNumber: '前-4612-1',
-            thumbnail: '/drawings/156 .jpg',
-            confidence: 0.80,
-            matchedFeatures: ['外形轮廓', '尺寸规格'],
-          },
-          {
-            partId: '55788824-ce77-42a7-88b4-9c635f587ac8',
-            partName: '前照灯高性能型',
-            partNumber: '前-9525-2',
-            thumbnail: '/drawings/157 .jpg',
-            confidence: 0.63,
-            matchedFeatures: ['外形轮廓'],
-          },
-        ];
-      }, 500);
-    }
-  }, 200);
-};
+  errorMsg.value = '';
 
-const selectResult = (result: RecognitionResult) => {
-  emit('selectResult', result);
+  const result = await preprocess(file);
+  isProcessing.value = false;
+
+  if (!result.valid) {
+    errorMsg.value = result.error ?? '文件处理失败';
+    return;
+  }
+
+  preprocessed.value = result;
+  previewUrl.value = result.processedDataUrl;
+
+  if (result.warning) {
+    brightnessWarning.value = true;
+  }
+}
+
+function proceed() {
+  if (!preprocessed.value) return;
+  const r = preprocessed.value;
+  // 把图片数据存入 store，AIAnalysisPage 挂载后自动消费
+  aiStore.pendingAnalysis = {
+    imageDataUrl: r.processedDataUrl,
+    fileName: r.fileName,
+    preprocessInfo: {
+      originalSize: r.originalSize,
+      processedSize: r.processedSize,
+      brightnessScore: r.brightnessScore,
+      fileSize: r.fileSize,
+    },
+  };
   handleClose();
-};
+  router.push('/ai-analysis');
+}
 
-const getConfidenceClass = (confidence: number) => {
-  if (confidence >= 0.85) return 'confidence-high';
-  if (confidence >= 0.70) return 'confidence-medium';
-  return 'confidence-low';
-};
+function reset() {
+  previewUrl.value = '';
+  errorMsg.value = '';
+  brightnessWarning.value = false;
+  preprocessed.value = null;
+}
 
-const handleClose = () => {
+function handleClose() {
   emit('close');
-  setTimeout(() => {
-    resetUpload();
-    isProcessing.value = false;
-    progress.value = 0;
-  }, 300);
-};
+  setTimeout(reset, 300);
+}
 </script>
 
 <style scoped>
@@ -209,6 +191,7 @@ const handleClose = () => {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,369 +201,167 @@ const handleClose = () => {
 
 .modal-container {
   background: white;
-  border-radius: 1rem;
-  max-width: 600px;
+  border-radius: 16px;
+  max-width: 520px;
   width: 100%;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.15);
 }
 
+/* Header */
 .modal-header {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
   color: white;
 }
 
 .header-icon {
   width: 40px;
   height: 40px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.header-icon svg {
-  width: 24px;
-  height: 24px;
-}
-
-.header-content {
-  flex: 1;
-}
-
-.header-content h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.header-subtitle {
-  font-size: 0.875rem;
-  opacity: 0.9;
-}
-
-.close-btn {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.1);
-  transition: all 0.2s;
-}
-
-.close-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.close-btn svg {
-  width: 20px;
-  height: 20px;
-}
-
-.modal-body {
-  flex: 1;
-  padding: 1.5rem;
-  overflow-y: auto;
-}
-
-.upload-area {
-  border: 2px dashed #d1d5db;
-  border-radius: 0.75rem;
-  padding: 3rem;
-  text-align: center;
-  transition: all 0.2s;
-}
-
-.upload-area:hover {
-  border-color: #3b82f6;
-  background: #f9fafb;
-}
-
-.upload-icon {
-  width: 64px;
-  height: 64px;
-  color: #9ca3af;
-  margin: 0 auto 1rem;
-}
-
-.upload-area h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.file-input {
-  display: none;
-}
-
-.image-preview {
-  position: relative;
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-.image-preview img {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-.reupload-btn {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  padding: 0.5rem 1rem;
-  background: white;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.processing-state {
-  text-align: center;
-  padding: 3rem 0;
-}
-
-.processing-spinner {
-  width: 64px;
-  height: 64px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #3b82f6;
-  border-radius: 50%;
-  margin: 0 auto 1.5rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.progress-bar {
-  width: 100%;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: 0.25rem;
-  overflow: hidden;
-  margin-top: 1rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #3b82f6;
-  transition: width 0.3s;
-}
-
-.results-container h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.results-hint {
-  font-size: 0.875rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
-}
-
-.result-card {
-  display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.75rem;
-  margin-bottom: 0.75rem;
-  transition: all 0.2s;
-  position: relative;
-}
-
-.result-card:hover {
-  border-color: #3b82f6;
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-  transform: translateY(-2px);
-}
-
-.result-rank {
-  position: absolute;
-  top: -8px;
-  left: -8px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 0.875rem;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.rank-1 {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.rank-2 {
-  background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
-}
-
-.rank-3 {
-  background: linear-gradient(135deg, #cd7f32 0%, #a0522d 100%);
-}
-
-.result-card img {
-  width: 100px;
-  height: 100px;
-  object-fit: cover;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
   flex-shrink: 0;
 }
 
-.result-info {
+.header-icon svg { width: 22px; height: 22px; }
+
+.header-content { flex: 1; }
+.header-content h2 { font-size: 1.125rem; font-weight: 700; margin: 0 0 2px; }
+.header-subtitle { font-size: 0.8125rem; opacity: 0.85; margin: 0; }
+
+.close-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.15);
+  transition: background 200ms ease;
+}
+.close-btn:hover { background: rgba(255,255,255,0.25); }
+.close-btn svg { width: 18px; height: 18px; }
+
+/* Body */
+.modal-body {
   flex: 1;
+  padding: 24px;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 16px;
 }
 
-.result-info h4 {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #111827;
-}
-
-.part-number {
-  font-size: 0.875rem;
-  color: #6b7280;
-  font-family: monospace;
-}
-
-.confidence-bar {
-  margin-top: 0.25rem;
-}
-
-.confidence-label {
+/* Alerts */
+.alert-error, .alert-warning {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.25rem;
-  font-size: 0.75rem;
-}
-
-.confidence-label span:first-child {
-  color: #6b7280;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
+.alert-error { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+.alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; flex-wrap: wrap; }
+.alert-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; }
 
-.confidence-value {
-  font-weight: 700;
-  font-size: 0.875rem;
+.warning-btns {
+  display: flex; gap: 8px; width: 100%; margin-top: 8px;
 }
-
-.confidence-value.confidence-high {
-  color: #10b981;
+.btn-warn-sec {
+  padding: 5px 14px; border-radius: 6px; border: 1px solid #d97706;
+  background: transparent; color: #92400e; font-size: 0.8125rem; font-weight: 600;
+  transition: background 200ms ease;
 }
-
-.confidence-value.confidence-medium {
-  color: #f59e0b;
+.btn-warn-sec:hover { background: #fef3c7; }
+.btn-warn-pri {
+  padding: 5px 14px; border-radius: 6px; background: #d97706;
+  color: white; font-size: 0.8125rem; font-weight: 600;
+  transition: opacity 200ms ease;
 }
+.btn-warn-pri:hover { opacity: 0.9; }
 
-.confidence-value.confidence-low {
-  color: #ef4444;
+/* Upload area */
+.upload-area {
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 48px 32px;
+  text-align: center;
+  background: #f8fafc;
+  transition: border-color 200ms ease, background 200ms ease;
 }
-
-.confidence-progress {
-  height: 6px;
-  background: #e5e7eb;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.confidence-fill {
-  height: 100%;
-  transition: width 0.5s ease;
-  border-radius: 3px;
-}
-
-.confidence-fill.confidence-high {
-  background: linear-gradient(90deg, #10b981 0%, #059669 100%);
-}
-
-.confidence-fill.confidence-medium {
-  background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%);
-}
-
-.confidence-fill.confidence-low {
-  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
-}
-
-.matched-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-}
-
-.feature-tag {
-  padding: 0.25rem 0.5rem;
+.upload-area:hover, .upload-area.dragging {
+  border-color: #0369a1;
   background: #eff6ff;
-  color: #3b82f6;
-  font-size: 0.75rem;
-  border-radius: 0.25rem;
-  font-weight: 500;
 }
+.file-input { display: none; }
+.upload-icon { width: 48px; height: 48px; color: #94a3b8; margin: 0 auto 12px; }
+.upload-title { font-size: 1rem; font-weight: 600; color: #0f172a; margin: 0 0 4px; }
+.upload-hint { font-size: 0.875rem; color: #64748b; margin: 0; }
 
+/* Preview */
+.preview-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+.preview-img { width: 100%; max-height: 280px; object-fit: contain; display: block; background: #f1f5f9; }
+.reupload-btn {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px 12px; background: white; border-radius: 8px;
+  font-size: 0.8125rem; font-weight: 600; color: #0f172a;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transition: box-shadow 200ms ease;
+}
+.reupload-btn:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+
+/* Processing */
+.processing-state {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 12px; padding: 32px 0; color: #64748b; font-size: 0.9375rem;
+}
+.spinner {
+  width: 40px; height: 40px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #0369a1;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Footer */
 .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  padding: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 16px 24px; border-top: 1px solid #e2e8f0;
 }
+.btn-cancel {
+  padding: 10px 20px; border-radius: 8px;
+  border: 1px solid #e2e8f0; background: white;
+  color: #475569; font-size: 0.9375rem; font-weight: 500;
+  transition: background 200ms ease;
+}
+.btn-cancel:hover { background: #f8fafc; }
+.btn-submit {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 20px; border-radius: 8px;
+  background: #0369a1; color: white;
+  font-size: 0.9375rem; font-weight: 600;
+  transition: opacity 200ms ease;
+}
+.btn-submit:hover { opacity: 0.9; }
+.btn-icon { width: 16px; height: 16px; }
 
-.cancel-btn,
-.submit-btn {
-  padding: 0.5rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.cancel-btn {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-}
-
-.cancel-btn:hover {
-  background: #f9fafb;
-}
-
-.submit-btn {
-  background: #3b82f6;
-  color: white;
-}
-
-.submit-btn:hover {
-  background: #2563eb;
-}
-
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.3s;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
+/* Transition */
+.modal-enter-active, .modal-leave-active { transition: opacity 0.25s ease; }
+.modal-enter-from, .modal-leave-to { opacity: 0; }
 </style>

@@ -69,7 +69,7 @@ coverage/
 # 参考文件（内部文档，不上传）
 参考文件/
 design-system/
-tools/
+test_tools/
 
 # 图纸文件（不上传）
 indunexus-web/public/drawings/

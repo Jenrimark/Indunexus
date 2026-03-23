@@ -209,11 +209,8 @@ const goToSystemSettings = () => {
 };
 
 const goToAnalytics = () => {
-  uiStore.showToast({
-    type: 'info',
-    message: '数据分析功能开发中',
-  });
-};
+  router.push('/admin/dashboard')
+}
 </script>
 
 <style scoped>

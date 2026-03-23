@@ -75,35 +75,42 @@ client.interceptors.response.use(
   (error: AxiosError) => {
     console.error('[API Response Error]', error);
     
-    // 统一错误处理
+    // 提取后端返回的错误信息
+    let message = '请求失败';
     if (error.response) {
       const status = error.response.status;
       const url = error.config?.url || '';
+      const data = error.response.data as any;
+      
+      // 优先使用后端返回的 detail 或 message
+      if (data?.detail) {
+        message = data.detail;
+      } else if (data?.message) {
+        message = data.message;
+      } else if (status === 401) {
+        message = '用户名或密码错误';
+      } else if (status === 403) {
+        message = '没有权限访问该资源';
+      } else if (status === 404) {
+        message = '请求的资源不存在';
+      } else if (status === 500) {
+        message = '服务器错误，请稍后重试';
+      }
       
       // 只有在非登录接口返回 401 时才跳转登录页
       if (status === 401 && !url.includes('/auth/login')) {
-        // 未授权，清除 token 并跳转登录
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         if (window.location.pathname !== '/login') {
           window.location.href = '/login';
         }
-      } else if (status === 403) {
-        console.error('没有权限访问该资源');
-      } else if (status === 404) {
-        console.error('请求的资源不存在');
-      } else if (status === 500) {
-        console.error('服务器错误');
-      } else {
-        console.error(`请求失败: ${status}`);
       }
     } else if (error.request) {
-      console.error('网络错误，请检查网络连接');
-    } else {
-      console.error('请求配置错误');
+      message = '网络错误，请检查网络连接';
     }
     
-    return Promise.reject(error);
+    const err = new Error(message);
+    return Promise.reject(err);
   }
 );
 
