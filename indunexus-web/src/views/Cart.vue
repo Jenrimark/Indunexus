@@ -40,11 +40,14 @@
             </div>
             
             <div class="col-product">
-              <img :src="item.part.image_url || '/placeholder-part.png'" :alt="item.part.name" />
+              <img
+                :src="item.part.images?.thumbnail || '/placeholder-part.png'"
+                :alt="item.part.name"
+              />
               <div class="product-info">
                 <h3>{{ item.part.name }}</h3>
-                <p class="part-number">型号: {{ item.part.part_number }}</p>
-                <p class="manufacturer">品牌: {{ item.part.manufacturer }}</p>
+                <p class="part-number">型号: {{ item.part.partNumber }}</p>
+                <p class="manufacturer">品牌: {{ item.part.brand ?? '—' }}</p>
               </div>
             </div>
 
@@ -207,7 +210,7 @@ const orderForm = ref({
 });
 
 const selectedItems = computed(() => {
-  return cartStore.items.filter(item => item.selected);
+  return cartStore.items.filter((item) => item.selected !== false);
 });
 
 const subtotal = computed(() => {
@@ -226,13 +229,13 @@ const totalPrice = computed(() => {
 });
 
 const toggleSelectAll = () => {
-  cartStore.items.forEach(item => {
+  cartStore.items.forEach((item) => {
     item.selected = selectAll.value;
   });
 };
 
 const updateSelection = () => {
-  selectAll.value = cartStore.items.every(item => item.selected);
+  selectAll.value = cartStore.items.every((item) => item.selected !== false);
 };
 
 const increaseQuantity = (item: any) => {

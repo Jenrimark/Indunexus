@@ -3,6 +3,8 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import * as ordersApi from '../api/orders';
 
+export type Order = ordersApi.Order;
+
 export interface OrderItem {
   id: number;
   part_id: string;
@@ -13,30 +15,6 @@ export interface OrderItem {
   quantity: number;
   price: number;
   subtotal: number;
-}
-
-export interface Order {
-  id: number;
-  order_number: string;
-  user_id: string;
-  status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled';
-  created_at: string;
-  paid_at?: string;
-  shipped_at?: string;
-  completed_at?: string;
-  subtotal: number;
-  shipping_fee: number;
-  discount: number;
-  total_amount: number;
-  tracking_number?: string;
-  receiver_name: string;
-  receiver_phone: string;
-  shipping_address: string;
-  need_invoice: boolean;
-  invoice_title?: string;
-  tax_number?: string;
-  remark?: string;
-  items: OrderItem[];
 }
 
 export const useOrdersStore = defineStore('orders', () => {
@@ -90,7 +68,7 @@ export const useOrdersStore = defineStore('orders', () => {
     }
   };
 
-  const updateOrderStatus = async (orderId: number, status: Order['status']) => {
+  const updateOrderStatus = async (orderId: number, status: ordersApi.OrderStatus) => {
     loading.value = true;
     try {
       const updatedOrder = await ordersApi.updateOrder(orderId, { status });

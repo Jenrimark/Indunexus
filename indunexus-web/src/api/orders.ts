@@ -64,11 +64,13 @@ export interface OrderItem {
   subtotal: number;
 }
 
+export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled';
+
 export interface Order {
   id: number;
   order_number: string;
   user_id: string;
-  status: string;
+  status: OrderStatus;
   created_at: string;
   paid_at?: string;
   shipped_at?: string;

@@ -116,7 +116,7 @@
         </button>
 
         <button
-          v-if="part.technicalDrawing"
+          v-if="part.technicalDrawingUrl"
           class="secondary-btn cursor-pointer"
           @click="downloadDrawing"
         >

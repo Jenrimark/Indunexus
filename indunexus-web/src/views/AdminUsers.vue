@@ -180,12 +180,10 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useUIStore } from '../stores/ui';
 import { userApi, type User } from '../api/admin';
 import Navbar from '../components/Navbar.vue';
 
-const router = useRouter();
 const uiStore = useUIStore();
 
 const users = ref<User[]>([]);

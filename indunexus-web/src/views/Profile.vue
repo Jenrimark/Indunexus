@@ -274,7 +274,8 @@ const getRoleLabel = (role: string) => {
   return roleMap[role] || role;
 };
 
-const formatDate = (dateStr: string) => {
+const formatDate = (dateStr: string | undefined) => {
+  if (!dateStr) return '—';
   const date = new Date(dateStr);
   return date.toLocaleDateString('zh-CN', {
     year: 'numeric',
@@ -287,7 +288,7 @@ const startEdit = () => {
   isEditing.value = true;
   editForm.username = user.value.username;
   editForm.email = user.value.email;
-  editForm.avatar = user.value.avatar;
+  editForm.avatar = user.value.avatar ?? '';
   editForm.companyName = user.value.companyName || '';
   editForm.companyDescription = user.value.companyDescription || '';
 };

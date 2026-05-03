@@ -82,7 +82,7 @@
             @click="handleProductClick(part)"
           >
             <div class="product-image">
-              <img :src="part.imageUrl || '/placeholder.png'" :alt="part.name" />
+              <img :src="part.images?.thumbnail || '/placeholder.png'" :alt="part.name" />
               <button 
                 class="favorite-btn"
                 :class="{ active: isFavorite(part.id) }"
@@ -100,7 +100,7 @@
             </div>
             <div class="product-info">
               <h3 class="product-name">{{ part.name }}</h3>
-              <p class="product-model">型号: {{ part.model }}</p>
+              <p class="product-model">型号: {{ part.partNumber }}</p>
               <div class="product-footer">
                 <span class="product-price">¥{{ part.price }}</span>
                 <button class="add-cart-btn" @click.stop="addToCart(part)">

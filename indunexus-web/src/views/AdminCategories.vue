@@ -107,13 +107,11 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import CategoryNode from '../components/CategoryNode.vue';
 import Navbar from '../components/Navbar.vue';
 import { useUIStore } from '../stores/ui';
 import { categoryApi, type Category } from '../api/admin';
 
-const router = useRouter();
 const uiStore = useUIStore();
 
 const categories = ref<Category[]>([]);
@@ -178,7 +176,7 @@ const openEditModal = (category: Category) => {
   formData.value = {
     name: category.name,
     name_en: category.name_en || '',
-    parent_id: category.parent_id,
+    parent_id: category.parent_id ?? null,
     icon: category.icon || '',
     sort_order: category.sort_order
   };

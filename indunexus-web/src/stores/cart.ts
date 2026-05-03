@@ -64,7 +64,11 @@ export const useCartStore = defineStore('cart', () => {
   function loadFromLocalStorage() {
     const saved = localStorage.getItem('cart');
     if (saved) {
-      items.value = JSON.parse(saved);
+      const parsed = JSON.parse(saved) as CartItem[];
+      items.value = parsed.map((row) => ({
+        ...row,
+        selected: row.selected !== false,
+      }));
     }
   }
 

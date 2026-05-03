@@ -12,7 +12,7 @@
       <div v-if="favorites.length > 0" class="favorites-grid">
         <div v-for="item in favorites" :key="item.id" class="favorite-card">
           <div class="card-image">
-            <img :src="item.images?.thumbnail || item.image || '/placeholder-part.png'" :alt="item.name" />
+            <img :src="item.images?.thumbnail || '/placeholder-part.png'" :alt="item.name" />
             <button class="remove-btn" @click="removeFavorite(item.id)" title="取消收藏">
               <svg viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -70,14 +70,12 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { useRouter } from 'vue-router';
 import { useCartStore } from '../stores/cart';
 import { useFavoritesStore } from '../stores/favorites';
 import { useUIStore } from '../stores/ui';
 import Navbar from '../components/Navbar.vue';
 import AIRecognitionModal from '../components/AIRecognitionModal.vue';
 
-const router = useRouter();
 const cartStore = useCartStore();
 const favoritesStore = useFavoritesStore();
 const uiStore = useUIStore();

@@ -50,26 +50,37 @@ export const partsApi = {
       page: query.page,
       page_size: query.pageSize,
     });
-    
-    // 转换后端响应格式为前端期望的格式
-    // 将 SPU/SKU 结构扁平化为 Part 数组
+
+    // axios 拦截器已返回 response.data 且转为 camelCase；此处断言 body 形状
+    type SearchBody = {
+      items?: unknown[];
+      total?: number;
+      page?: number;
+      pageSize?: number;
+      page_size?: number;
+      hasMore?: boolean;
+      has_more?: boolean;
+    };
+    const body = response as unknown as SearchBody;
+
     const parts: Part[] = [];
-    if (response.items && Array.isArray(response.items)) {
-      response.items.forEach((spu: any) => {
-        const transformedParts = transformSPUToPart(spu);
-        parts.push(...transformedParts);
+    if (body.items && Array.isArray(body.items)) {
+      body.items.forEach((spu: any) => {
+        parts.push(...transformSPUToPart(spu));
       });
     }
-    
+
+    const pageSize = body.pageSize ?? body.page_size ?? 20;
+
     return {
       success: true,
       data: {
         parts,
-        total: response.total || 0,
-        page: response.page || 1,
-        pageSize: response.page_size || 20,
-        hasMore: response.has_more || false,
-      }
+        total: body.total ?? 0,
+        page: body.page ?? 1,
+        pageSize,
+        hasMore: body.hasMore ?? body.has_more ?? false,
+      },
     };
   },
 

@@ -64,7 +64,8 @@ export interface SearchQuery {
   type?: 'model' | 'drawing' | 'barcode' | 'auto';
   categoryId?: string;
   filters?: Record<string, any>;
-  sortBy?: 'relevance' | 'price' | 'stock' | 'sales';
+  /** 与后端/网格排序选项对齐（price/name/stock/created_at 等） */
+  sortBy?: 'relevance' | 'price' | 'stock' | 'sales' | 'created_at' | 'name' | string;
   sortOrder?: 'asc' | 'desc';
   page: number;
   pageSize: number;
@@ -151,6 +152,8 @@ export interface CartItem {
   part: Part;
   quantity: number;
   subtotal: number;
+  /** 结算勾选，默认 true */
+  selected?: boolean;
 }
 
 export type ViewMode = 'waterfall' | 'list' | 'detail' | 'graph';

@@ -220,13 +220,13 @@
               
               <div class="file-upload">
                 <input 
-                  ref="fileInput" 
+                  ref="fileInputRef" 
                   type="file" 
                   accept=".csv,.xlsx,.xls" 
                   @change="handleFileSelect"
                   style="display: none"
                 />
-                <button class="btn-select-file" @click="$refs.fileInput.click()">
+                <button class="btn-select-file" type="button" @click="fileInputRef?.click()">
                   选择文件
                 </button>
                 <span v-if="selectedFile" class="file-name">{{ selectedFile.name }}</span>
@@ -255,12 +255,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import Navbar from '../components/Navbar.vue';
 import { useUIStore } from '../stores/ui';
 import { partApi, categoryApi } from '../api/admin';
 
-const router = useRouter();
 const uiStore = useUIStore();
 
 const parts = ref<any[]>([]);
@@ -279,6 +277,19 @@ const selectedFile = ref<File | null>(null);
 const importing = ref(false);
 const importProgress = ref(0);
 const loading = ref(false);
+const fileInputRef = ref<HTMLInputElement | null>(null);
+const imageUrlsInput = ref('');
+
+function syncImageUrlsInput() {
+  imageUrlsInput.value = formData.value.images.join(', ');
+}
+
+function updateImages() {
+  formData.value.images = imageUrlsInput.value
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 const formData = ref({
   part_number: '',
@@ -371,6 +382,7 @@ const openAddModal = () => {
     stock: 0,
     images: [],
   };
+  syncImageUrlsInput();
   showEditModal.value = true;
 };
 
@@ -390,6 +402,7 @@ const openEditModal = (part: any) => {
     stock: firstSku?.stock || 0,
     images: firstSku?.images || [],
   };
+  syncImageUrlsInput();
   showEditModal.value = true;
 };
 
@@ -399,6 +412,7 @@ const closeEditModal = () => {
 };
 
 const savePart = async () => {
+  updateImages();
   if (!formData.value.part_number || !formData.value.name || !formData.value.category_id) {
     uiStore.showToast({
       type: 'error',

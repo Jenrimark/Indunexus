@@ -212,7 +212,7 @@ function pushEvent() {
     { text: `新用户注册：buyer_${Math.floor(Math.random()*9999)}`, type: 'user' },
     { text: `库存预警：零件 P-${Math.floor(Math.random()*9999)} 库存不足`, type: 'warn' },
   ]
-  const t = templates[Math.floor(Math.random() * templates.length)]
+  const t = templates[Math.floor(Math.random() * templates.length)]!
   eventLog.value.unshift({ id: eventId++, text: t.text, time: '刚刚', type: t.type })
   if (eventLog.value.length > 8) eventLog.value.pop()
 }

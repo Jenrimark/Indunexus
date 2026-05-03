@@ -1,7 +1,10 @@
 <template>
   <div class="ai-analysis-page">
     <Navbar @open-a-i-modal="showAIModal = true" />
-    <AIRecognitionModal v-if="showAIModal" @close="showAIModal = false" />
+    <AIRecognitionModal
+      :is-open="showAIModal"
+      @close="showAIModal = false"
+    />
     <!-- 顶部标签页 -->
     <div class="page-header">
       <div class="page-title-row">
