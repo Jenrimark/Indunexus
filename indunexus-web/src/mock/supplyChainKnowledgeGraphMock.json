@@ -1,0 +1,769 @@
+{
+  "meta": {
+    "scenario": "电芯批次外壳划伤视觉异常 → 跨级供应商穿透（智鉴车件）",
+    "anchorClusterId": "INDU-VC-SCRATCH-H",
+    "seedLotId": "INDU-LOT-CELL-20260504-A",
+    "region": "华东 PACK 产业园",
+    "version": "1.0.0"
+  },
+  "nodes": [
+    {
+      "id": "INDU-VC-SCRATCH-H",
+      "label": "划痕簇_H",
+      "entityType": "VisualCluster",
+      "type": "dashboard-visual-cluster",
+      "kgType": "root",
+      "size": 72,
+      "clusterCode": "SCRATCH_H",
+      "embeddingFamily": "ConvNeXt-B · 外壳 ROI",
+      "similarityThreshold": 0.88,
+      "trainedAt": "2026-03-15"
+    },
+    {
+      "id": "INDU-VC-DUST-K",
+      "label": "粉尘簇_K",
+      "entityType": "VisualCluster",
+      "type": "dashboard-visual-cluster",
+      "kgType": "visualCluster",
+      "size": 52,
+      "clusterCode": "DUST_K",
+      "embeddingFamily": "ConvNeXt-B · 清洁度",
+      "similarityThreshold": 0.82,
+      "trainedAt": "2026-02-01"
+    },
+    {
+      "id": "INDU-LOT-CELL-20260504-A",
+      "label": "LOT·电芯·20260504-A",
+      "entityType": "InspectionLot",
+      "type": "dashboard-inspection-lot",
+      "kgType": "inspectionLot",
+      "size": 56,
+      "lotNo": "CELL-20260504-A",
+      "lineCode": "PACK-L3-B",
+      "producedAt": "2026-05-04T06:40:00+08:00",
+      "shift": "早班",
+      "qcStatus": "的视觉复检触发",
+      "defectHint": "外壳划伤 · 方向西北象限"
+    },
+    {
+      "id": "INDU-LOT-CELL-20260503-B",
+      "label": "LOT·电芯·20260503-B",
+      "entityType": "InspectionLot",
+      "type": "dashboard-inspection-lot",
+      "kgType": "inspectionLot",
+      "size": 50,
+      "lotNo": "CELL-20260503-B",
+      "lineCode": "PACK-L3-A",
+      "producedAt": "2026-05-03T22:15:00+08:00",
+      "shift": "夜班",
+      "qcStatus": "抽检合格",
+      "defectHint": ""
+    },
+    {
+      "id": "INDU-LOT-SHELL-20260502-C",
+      "label": "LOT·壳体·20260502-C",
+      "entityType": "InspectionLot",
+      "type": "dashboard-inspection-lot",
+      "kgType": "inspectionLot",
+      "size": 48,
+      "lotNo": "SHELL-20260502-C",
+      "lineCode": "STAMP-L1",
+      "producedAt": "2026-05-02T14:00:00+08:00",
+      "shift": "中班",
+      "qcStatus": "噪声分支",
+      "defectHint": "冲压毛刺（无关路径）"
+    },
+    {
+      "id": "INDU-LOT-FORM-20260428-D",
+      "label": "LOT·成形·20260428-D",
+      "entityType": "InspectionLot",
+      "type": "dashboard-inspection-lot",
+      "kgType": "inspectionLot",
+      "size": 46,
+      "lotNo": "FORM-20260428-D",
+      "lineCode": "ROLL-L2",
+      "producedAt": "2026-04-28T09:30:00+08:00",
+      "shift": "早班",
+      "qcStatus": "归档",
+      "defectHint": ""
+    },
+    {
+      "id": "INDU-LOT-CELL-20260420-E",
+      "label": "LOT·电芯·20260420-E",
+      "entityType": "InspectionLot",
+      "type": "dashboard-inspection-lot",
+      "kgType": "inspectionLot",
+      "size": 46,
+      "lotNo": "CELL-20260420-E",
+      "lineCode": "PACK-L2-C",
+      "producedAt": "2026-04-20T18:00:00+08:00",
+      "shift": "夜班",
+      "qcStatus": "历史参照批",
+      "defectHint": "相似簇弱匹配"
+    },
+    {
+      "id": "INDU-PART-BTM-9001",
+      "label": "动力电池模组总成",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 60,
+      "partNumber": "BTM-9001-VDA",
+      "material": "模组总成（壳体+极耳）",
+      "cellBatchRef": "CELL-20260504-A",
+      "imgUrl": "https://picsum.photos/seed/indu-btm9001/96/96",
+      "features": ["VDA 模组", "液冷板集成", "批次 CELL-20260504-A"],
+      "status": "low_stock"
+    },
+    {
+      "id": "INDU-PART-CAN-3102",
+      "label": "方形钢壳壳体",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 52,
+      "partNumber": "CAN-3102-Fe",
+      "material": "镀镍钢带冲压",
+      "cellBatchRef": "关联 LOT-SHELL",
+      "imgUrl": "https://picsum.photos/seed/indu-can3102/96/96",
+      "features": ["深拉深", "焊缝 AOI"],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-COIL-720",
+      "label": "铝卷材（壳体用料）",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 48,
+      "partNumber": "AL-COIL-720",
+      "material": "3003-H14",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-coil720/96/96",
+      "features": ["厚度公差 ±0.02mm"],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-INGOT-101",
+      "label": "铝锭坯料",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 44,
+      "partNumber": "AL-INGOT-101",
+      "material": "重熔铝锭",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-ingot101/96/96",
+      "features": ["光谱追溯码"],
+      "status": "pending"
+    },
+    {
+      "id": "INDU-PART-MOD-ALT",
+      "label": "模组总成（备选配置）",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 48,
+      "partNumber": "BTM-9001-ALT",
+      "material": "同族替代 BOM",
+      "cellBatchRef": "CELL-20260503-B",
+      "imgUrl": "https://picsum.photos/seed/indu-btmalt/96/96",
+      "features": ["共用 Tier1 组装"],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-BUSBAR-220",
+      "label": "高压铜排组件",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 44,
+      "partNumber": "BUS-220-Cu",
+      "material": "镀镍铜排",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-bus220/96/96",
+      "features": ["螺栓扭矩追溯"],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-BAF-140",
+      "label": "隔热防火垫",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 42,
+      "partNumber": "BAF-140-Si",
+      "material": "陶瓷纤维",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-baf140/96/96",
+      "features": [],
+      "status": "out_of_stock"
+    },
+    {
+      "id": "INDU-PART-LIQ-030",
+      "label": "冷却板焊接组件",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 44,
+      "partNumber": "LIQ-030-Al",
+      "material": "摩擦焊冷板",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-liq030/96/96",
+      "features": [],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-FRM-501",
+      "label": "模组框体型材",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 42,
+      "partNumber": "FRM-501-Extr",
+      "material": "挤压铝型材",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-frm501/96/96",
+      "features": [],
+      "status": "pending"
+    },
+    {
+      "id": "INDU-S-T1-ASM-001",
+      "label": "精工模组组装",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 40,
+      "tier": 1,
+      "region": "苏州",
+      "supplierCode": "T1-SUZHOU-ASM-001"
+    },
+    {
+      "id": "INDU-S-T1-PACK-002",
+      "label": "蓝海 PACK 集成",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 38,
+      "tier": 1,
+      "region": "常州",
+      "supplierCode": "T1-CZ-PACK-002"
+    },
+    {
+      "id": "INDU-S-T2-SHELL-042",
+      "label": "江南铝壳精密",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 42,
+      "tier": 2,
+      "region": "无锡",
+      "supplierCode": "T2-WX-SHELL-042"
+    },
+    {
+      "id": "INDU-S-T2-ROLL-017",
+      "label": "卷材轧制科技",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 38,
+      "tier": 2,
+      "region": "镇江",
+      "supplierCode": "T2-ZJ-ROLL-017"
+    },
+    {
+      "id": "INDU-S-T2-BUSBAR-009",
+      "label": "铜排电镀联合体",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 2,
+      "region": "昆山",
+      "supplierCode": "T2-KS-BUSBAR-009"
+    },
+    {
+      "id": "INDU-S-T3-SMELT-005",
+      "label": "赣江电解铝冶炼",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 3,
+      "region": "赣州",
+      "supplierCode": "T3-GZ-SMELT-005"
+    },
+    {
+      "id": "INDU-S-T3-CHEM-014",
+      "label": "溶剂精细化工",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 3,
+      "region": "南京",
+      "supplierCode": "T3-NJ-CHEM-014"
+    },
+    {
+      "id": "INDU-S-T1-STAMP-003",
+      "label": "华东冲压成形",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 1,
+      "region": "宁波",
+      "supplierCode": "T1-NB-STAMP-003"
+    },
+    {
+      "id": "INDU-S-T2-DIE-028",
+      "label": "精密模具工坊",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 2,
+      "region": "余姚",
+      "supplierCode": "T2-YY-DIE-028"
+    },
+    {
+      "id": "INDU-S-T2-COOL-011",
+      "label": "液冷板焊接厂",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 2,
+      "region": "合肥",
+      "supplierCode": "T2-HF-COOL-011"
+    },
+    {
+      "id": "INDU-S-T3-ALLOY-022",
+      "label": "铝合金熔铸基地",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 3,
+      "region": "铜陵",
+      "supplierCode": "T3-TL-ALLOY-022"
+    },
+    {
+      "id": "INDU-S-T1-WIRE-004",
+      "label": "线束总成供应商",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 1,
+      "region": "廊坊",
+      "supplierCode": "T1-LF-WIRE-004"
+    },
+    {
+      "id": "INDU-S-T2-FIBER-031",
+      "label": "陶瓷纤维隔热厂",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 2,
+      "region": "淄博",
+      "supplierCode": "T2-ZB-FIBER-031"
+    },
+    {
+      "id": "INDU-S-T3-MINE-099",
+      "label": "硅铝土矿业代理",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 32,
+      "tier": 3,
+      "region": "海外",
+      "supplierCode": "T3-OV-MINE-099"
+    },
+    {
+      "id": "INDU-S-T2-LOG-077",
+      "label": "冷链托盘承运",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 32,
+      "tier": 2,
+      "region": "上海港",
+      "supplierCode": "T2-SH-LOG-077"
+    },
+    {
+      "id": "INDU-S-T1-OEM-088",
+      "label": "整车厂指定二级窗口",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 1,
+      "region": "临港",
+      "supplierCode": "T1-LG-OEM-088"
+    },
+    {
+      "id": "INDU-S-T2-SERVICE-055",
+      "label": "视觉运维服务商",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 32,
+      "tier": 2,
+      "region": "杭州",
+      "supplierCode": "T2-HZ-SERVICE-055"
+    },
+    {
+      "id": "INDU-S-T3-RECYCLE-066",
+      "label": "废料回收再生",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 32,
+      "tier": 3,
+      "region": "台州",
+      "supplierCode": "T3-TZ-RECYCLE-066"
+    },
+    {
+      "id": "INDU-S-T2-SHELL-099",
+      "label": "江北镀镍代工",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 2,
+      "region": "泰州",
+      "supplierCode": "T2-TZ-SHELL-099"
+    },
+    {
+      "id": "INDU-S-T1-BATT-007",
+      "label": "电芯分容测试基地",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 1,
+      "region": "合肥",
+      "supplierCode": "T1-HF-BATT-007"
+    },
+    {
+      "id": "INDU-PART-SEP-880",
+      "label": "隔膜卷材组件",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 42,
+      "partNumber": "SEP-880-PP",
+      "material": "陶瓷涂层隔膜",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-sep880/96/96",
+      "features": ["噪声分支物料"],
+      "status": "pending"
+    },
+    {
+      "id": "INDU-PART-GASKET-120",
+      "label": "密封胶圈套件",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 40,
+      "partNumber": "GSK-120-FKM",
+      "material": "氟橡胶",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-gsk120/96/96",
+      "features": [],
+      "status": "in_stock"
+    },
+    {
+      "id": "INDU-PART-BMS-410",
+      "label": "BMS 外壳注塑件",
+      "entityType": "Part",
+      "type": "dashboard-part",
+      "kgType": "part",
+      "size": 40,
+      "partNumber": "BMS-410-PA66",
+      "material": "尼龙注塑",
+      "cellBatchRef": "",
+      "imgUrl": "https://picsum.photos/seed/indu-bms410/96/96",
+      "features": [],
+      "status": "low_stock"
+    },
+    {
+      "id": "INDU-S-T2-GASKET-044",
+      "label": "橡胶密封制品厂",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 34,
+      "tier": 2,
+      "region": "嘉兴",
+      "supplierCode": "T2-JX-GASKET-044"
+    },
+    {
+      "id": "INDU-S-T3-POLY-033",
+      "label": "尼龙改性粒子厂",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 32,
+      "tier": 3,
+      "region": "余姚",
+      "supplierCode": "T3-YY-POLY-033"
+    },
+    {
+      "id": "INDU-S-T1-PLAS-012",
+      "label": "注塑结构件一级厂",
+      "entityType": "Supplier",
+      "type": "dashboard-supplier",
+      "kgType": "supplier",
+      "size": 36,
+      "tier": 1,
+      "region": "无锡",
+      "supplierCode": "T1-WX-PLAS-012"
+    }
+  ],
+  "edges": [
+    {
+      "id": "INDU-E-M1",
+      "source": "INDU-VC-SCRATCH-H",
+      "target": "INDU-LOT-CELL-20260504-A",
+      "relType": "MATCHES",
+      "score": 0.94
+    },
+    {
+      "id": "INDU-E-M2",
+      "source": "INDU-VC-SCRATCH-H",
+      "target": "INDU-LOT-CELL-20260420-E",
+      "relType": "MATCHES",
+      "score": 0.61
+    },
+    {
+      "id": "INDU-E-M3",
+      "source": "INDU-VC-DUST-K",
+      "target": "INDU-LOT-FORM-20260428-D",
+      "relType": "MATCHES",
+      "score": 0.67
+    },
+    {
+      "id": "INDU-E-MO1",
+      "source": "INDU-LOT-CELL-20260504-A",
+      "target": "INDU-PART-BTM-9001",
+      "relType": "MANUFACTURED_ON"
+    },
+    {
+      "id": "INDU-E-MO2",
+      "source": "INDU-LOT-CELL-20260503-B",
+      "target": "INDU-PART-MOD-ALT",
+      "relType": "MANUFACTURED_ON"
+    },
+    {
+      "id": "INDU-E-MO3",
+      "source": "INDU-LOT-SHELL-20260502-C",
+      "target": "INDU-PART-CAN-3102",
+      "relType": "MANUFACTURED_ON"
+    },
+    {
+      "id": "INDU-E-MO4",
+      "source": "INDU-LOT-FORM-20260428-D",
+      "target": "INDU-PART-COIL-720",
+      "relType": "MANUFACTURED_ON"
+    },
+    {
+      "id": "INDU-E-S1",
+      "source": "INDU-S-T1-ASM-001",
+      "target": "INDU-PART-BTM-9001",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S2",
+      "source": "INDU-S-T2-SHELL-042",
+      "target": "INDU-PART-BTM-9001",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S3",
+      "source": "INDU-S-T1-PACK-002",
+      "target": "INDU-PART-MOD-ALT",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S4",
+      "source": "INDU-S-T2-BUSBAR-009",
+      "target": "INDU-PART-BUSBAR-220",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S5",
+      "source": "INDU-S-T1-ASM-001",
+      "target": "INDU-PART-BUSBAR-220",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S6",
+      "source": "INDU-S-T2-FIBER-031",
+      "target": "INDU-PART-BAF-140",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S7",
+      "source": "INDU-S-T2-COOL-011",
+      "target": "INDU-PART-LIQ-030",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S8",
+      "source": "INDU-S-T1-OEM-088",
+      "target": "INDU-PART-FRM-501",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S9",
+      "source": "INDU-S-T2-SHELL-042",
+      "target": "INDU-PART-CAN-3102",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S10",
+      "source": "INDU-S-T1-STAMP-003",
+      "target": "INDU-PART-CAN-3102",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S11",
+      "source": "INDU-S-T2-ROLL-017",
+      "target": "INDU-PART-COIL-720",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S12",
+      "source": "INDU-S-T3-SMELT-005",
+      "target": "INDU-PART-INGOT-101",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S13",
+      "source": "INDU-S-T3-ALLOY-022",
+      "target": "INDU-PART-COIL-720",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S14",
+      "source": "INDU-S-T2-DIE-028",
+      "target": "INDU-PART-CAN-3102",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S15",
+      "source": "INDU-S-T3-CHEM-014",
+      "target": "INDU-PART-LIQ-030",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S16",
+      "source": "INDU-S-T1-WIRE-004",
+      "target": "INDU-PART-BTM-9001",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S17",
+      "source": "INDU-S-T2-SHELL-099",
+      "target": "INDU-PART-CAN-3102",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S18",
+      "source": "INDU-S-T3-MINE-099",
+      "target": "INDU-PART-BAF-140",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S19",
+      "source": "INDU-S-T2-LOG-077",
+      "target": "INDU-PART-INGOT-101",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S20",
+      "source": "INDU-S-T3-RECYCLE-066",
+      "target": "INDU-PART-INGOT-101",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S21",
+      "source": "INDU-S-T1-BATT-007",
+      "target": "INDU-PART-MOD-ALT",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S22",
+      "source": "INDU-S-T2-SERVICE-055",
+      "target": "INDU-PART-BTM-9001",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S23",
+      "source": "INDU-S-T3-POLY-033",
+      "target": "INDU-PART-BMS-410",
+      "relType": "SUPPLIES",
+      "tier": 3
+    },
+    {
+      "id": "INDU-E-S24",
+      "source": "INDU-S-T1-PLAS-012",
+      "target": "INDU-PART-BMS-410",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S25",
+      "source": "INDU-S-T2-GASKET-044",
+      "target": "INDU-PART-GASKET-120",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S26",
+      "source": "INDU-S-T1-ASM-001",
+      "target": "INDU-PART-GASKET-120",
+      "relType": "SUPPLIES",
+      "tier": 1
+    },
+    {
+      "id": "INDU-E-S27",
+      "source": "INDU-S-T2-BUSBAR-009",
+      "target": "INDU-PART-SEP-880",
+      "relType": "SUPPLIES",
+      "tier": 2
+    },
+    {
+      "id": "INDU-E-S28",
+      "source": "INDU-S-T1-PACK-002",
+      "target": "INDU-PART-SEP-880",
+      "relType": "SUPPLIES",
+      "tier": 1
+    }
+  ]
+}

@@ -16,4 +16,9 @@ import Toast from './components/Toast.vue';
   min-height: 100vh;
   background: var(--color-bg);
 }
+
+#app.dashboard-mode {
+  height: 100vh;
+  overflow: hidden;
+}
 </style>

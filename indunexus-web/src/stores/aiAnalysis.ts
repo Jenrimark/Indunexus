@@ -10,6 +10,7 @@ import type {
   SupplyChainData,
   KnowledgeGraphData,
   DecisionReport,
+  DashboardGraphSelectedPayload,
 } from '../types/aiAnalysis';
 import { WORKFLOW_NODES } from '../types/aiAnalysis';
 import {
@@ -115,6 +116,9 @@ export const useAiAnalysisStore = defineStore('aiAnalysis', () => {
     fileName: string;
     preprocessInfo: AnalysisRecord['preprocessInfo'];
   } | null>(null);
+
+  /** 管理大屏知识图谱：当前点击选中的节点（供 AI 分析或其它面板消费） */
+  const dashboardGraphSelectedNode = ref<DashboardGraphSelectedPayload | null>(null);
 
   // ── Getters ────────────────────────────────────────────────────────────────
 
@@ -360,6 +364,10 @@ export const useAiAnalysisStore = defineStore('aiAnalysis', () => {
     currentNodeIndex.value = -1;
   }
 
+  function setDashboardGraphSelectedNode(payload: DashboardGraphSelectedPayload | null): void {
+    dashboardGraphSelectedNode.value = payload;
+  }
+
   return {
     // State
     workflowNodes,
@@ -370,6 +378,7 @@ export const useAiAnalysisStore = defineStore('aiAnalysis', () => {
     analysisResult,
     records,
     pendingAnalysis,
+    dashboardGraphSelectedNode,
     // Getters
     filterRecordsByRange,
     // Actions
@@ -377,5 +386,6 @@ export const useAiAnalysisStore = defineStore('aiAnalysis', () => {
     saveRecord,
     loadRecords,
     resetAnalysis,
+    setDashboardGraphSelectedNode,
   };
 });

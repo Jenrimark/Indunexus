@@ -83,6 +83,59 @@ export interface SupplyChainData {
   leadTimeDays: number;
 }
 
+/** 管理大屏 / G6 图谱：零件在库状态（外圈颜色） */
+export type DashboardPartStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'pending';
+
+/** 点击图谱节点写入 Pinia 的零件载荷 */
+export interface DashboardGraphPartNodePayload {
+  entityType: 'Part';
+  id: string;
+  label: string;
+  imgUrl: string;
+  features: string[];
+  status: DashboardPartStatus;
+}
+
+/** 供应商节点载荷 */
+export interface DashboardGraphSupplierNodePayload {
+  entityType: 'Supplier';
+  id: string;
+  label: string;
+  tier?: number;
+  region?: string;
+  supplierCode?: string;
+}
+
+/** 质检批次节点载荷（管理大屏图谱） */
+export interface DashboardGraphInspectionLotNodePayload {
+  entityType: 'InspectionLot';
+  id: string;
+  label: string;
+  lotNo: string;
+  lineCode: string;
+  producedAt: string;
+  shift: string;
+  qcStatus: string;
+  defectHint?: string;
+}
+
+/** 视觉异常簇节点载荷 */
+export interface DashboardGraphVisualClusterNodePayload {
+  entityType: 'VisualCluster';
+  id: string;
+  label: string;
+  clusterCode: string;
+  embeddingFamily: string;
+  similarityThreshold: number;
+  trainedAt: string;
+}
+
+export type DashboardGraphSelectedPayload =
+  | DashboardGraphPartNodePayload
+  | DashboardGraphSupplierNodePayload
+  | DashboardGraphInspectionLotNodePayload
+  | DashboardGraphVisualClusterNodePayload;
+
 export interface KnowledgeGraphData {
   /** 零件分类路径（面包屑） */
   classificationPath: string[];

@@ -95,6 +95,14 @@ body {
   background-color: var(--color-bg);
 }
 
+/* 大屏模式：占满屏幕、禁用页面滚动（由页面按需添加dashboard-mode class） */
+html.dashboard-mode,
+body.dashboard-mode,
+#app.dashboard-mode {
+  height: 100%;
+  overflow: hidden;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 600;
