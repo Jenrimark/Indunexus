@@ -12,13 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    # v6 起 Action 运行时采用 Node.js 24，避免 GH Actions 对 Node 20 的弃用告警
     - uses: actions/checkout@v6
 
     - name: Setup Node.js
       uses: actions/setup-node@v6
       with:
-        node-version: '18'
+        # 与 indunexus-web/.nvmrc、package.json 中 @types/node 主版本一致（Vite 8 需 Node ≥20.19）
+        node-version-file: indunexus-web/.nvmrc
         cache: 'npm'
         cache-dependency-path: indunexus-web/package-lock.json
     
@@ -40,7 +40,7 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
+        python-version-file: indunexus-api/.python-version
         cache: 'pip'
         cache-dependency-path: indunexus-api/requirements.txt
     
