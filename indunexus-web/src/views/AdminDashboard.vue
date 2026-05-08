@@ -19,11 +19,11 @@
         <div class="header-right">
           <div class="status-dot"></div>
           <span class="status-text">系统运行正常</span>
-          <button class="back-btn" @click="router.push('/admin')">
+          <button class="back-btn" type="button" @click="router.push('/marketplace')">
             <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
               <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
             </svg>
-            返回管理台
+            返回前台
           </button>
         </div>
       </div>
@@ -254,7 +254,12 @@ function initCharts() {
       backgroundColor: 'transparent',
       tooltip: { show: false },
       animationDuration: 500,
-      legend: { bottom: 0, textStyle: { color: '#94a3b8', fontSize: 10 }, itemWidth: 10, itemHeight: 10 },
+      legend: {
+        bottom: 0,
+        textStyle: { color: '#ffffff', fontSize: 11, fontWeight: 'bold' },
+        itemWidth: 10,
+        itemHeight: 10,
+      },
       series: [{
         type: 'pie',
         radius: ['44%', '66%'],
@@ -268,15 +273,16 @@ function initCharts() {
         label: {
           show: true,
           position: 'inside',
-          color: '#cbd5e1',
-          fontSize: 10,
+          color: '#ffffff',
+          fontSize: 11,
+          fontWeight: 'bold',
           formatter: (params: any) => `${Number(params.percent).toFixed(1)}%`,
         },
         labelLine: {
           show: true,
           length: 8,
           length2: 6,
-          lineStyle: { color: 'rgba(148,163,184,0.65)' },
+          lineStyle: { color: '#94a3b8' },
         },
         data: orderStatusData.map((item) => ({
           value: item.value,
@@ -285,9 +291,11 @@ function initCharts() {
           label: {
             // 优先放在环内，扇区过小时才移到外部
             position: (item.value / totalOrderCount) * 100 < 9 ? 'outside' : 'inside',
-            color: (item.value / totalOrderCount) * 100 < 9 ? '#cbd5e1' : '#ffffff',
-            textBorderColor: (item.value / totalOrderCount) * 100 < 9 ? 'transparent' : '#020617',
-            textBorderWidth: (item.value / totalOrderCount) * 100 < 9 ? 0 : 2,
+            color: '#ffffff',
+            fontWeight: 'bold',
+            fontSize: 11,
+            textBorderColor: '#020617',
+            textBorderWidth: 2,
           },
           labelLine: {
             show: (item.value / totalOrderCount) * 100 < 9,
@@ -305,8 +313,8 @@ function initCharts() {
       backgroundColor: 'transparent',
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: 8, right: 8, top: 8, bottom: 4, containLabel: true },
-      xAxis: { type: 'value', axisLabel: { color: '#475569', fontSize: 10 }, splitLine: { lineStyle: { color: '#1e293b' } } },
-      yAxis: { type: 'category', data: cats.reverse(), axisLabel: { color: '#94a3b8', fontSize: 10 } },
+      xAxis: { type: 'value', axisLabel: { color: '#e2e8f0', fontSize: 10, fontWeight: 'bold' }, splitLine: { lineStyle: { color: '#1e293b' } } },
+      yAxis: { type: 'category', data: cats.reverse(), axisLabel: { color: '#ffffff', fontSize: 10, fontWeight: 'bold' } },
       series: [{
         type: 'bar', data: vals.reverse(), barMaxWidth: 14,
         itemStyle: {
@@ -316,7 +324,7 @@ function initCharts() {
           ]),
           borderRadius: [0, 4, 4, 0],
         },
-        label: { show: true, position: 'right', color: '#94a3b8', fontSize: 10, formatter: '{c}' }
+        label: { show: true, position: 'right', color: '#ffffff', fontSize: 11, fontWeight: 'bold', formatter: '{c}' }
       }]
     })
   }

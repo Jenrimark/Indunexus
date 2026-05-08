@@ -11,7 +11,6 @@ import Cart from './views/Cart.vue'
 import Orders from './views/Orders.vue'
 import OrderDetail from './views/OrderDetail.vue'
 import Favorites from './views/Favorites.vue'
-import Admin from './views/Admin.vue'
 import SupplierDashboard from './views/SupplierDashboard.vue'
 import AdminUsers from './views/AdminUsers.vue'
 import AdminCategories from './views/AdminCategories.vue'
@@ -77,8 +76,12 @@ const router = createRouter({
     {
       path: '/admin',
       name: 'Admin',
-      component: Admin,
+      component: AdminDashboard,
       meta: { requiresAuth: true, requiresAdmin: true },
+    },
+    {
+      path: '/admin/dashboard',
+      redirect: '/admin',
     },
     {
       path: '/admin/users',
@@ -96,12 +99,6 @@ const router = createRouter({
       path: '/admin/parts',
       name: 'AdminParts',
       component: AdminPartsManagement,
-      meta: { requiresAuth: true, requiresAdmin: true },
-    },
-    {
-      path: '/admin/dashboard',
-      name: 'AdminDashboard',
-      component: AdminDashboard,
       meta: { requiresAuth: true, requiresAdmin: true },
     },
     {
