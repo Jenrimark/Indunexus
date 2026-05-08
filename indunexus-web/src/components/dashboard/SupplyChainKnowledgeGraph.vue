@@ -15,7 +15,17 @@
       <!-- 浮在画布之上，格式与侧栏 panel-title（圆点 + 文案）一致 -->
       <div class="kg-heading" role="heading" aria-level="2">
         <span class="kg-heading-dot" aria-hidden="true"></span>
-        <span class="kg-heading-text">零件·供应商 知识图谱</span>
+        <span class="kg-heading-text">{{ graphHeading }}</span>
+      </div>
+      <div class="kg-scenario-switcher">
+        <button
+          v-for="opt in SCENARIO_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="kg-scenario-btn"
+          :class="{ 'is-active': scenario === opt.value }"
+          @click="switchScenario(opt.value)"
+        >{{ opt.label }}</button>
       </div>
       <nav class="kg-actions" aria-label="图谱操作">
         <button
@@ -191,11 +201,17 @@
             <div class="kg-detail-name">{{ detailPayload.label }}</div>
             <div class="kg-detail-id">供应商 · {{ detailPayload.id }}</div>
             <ul class="kg-detail-features kg-detail-meta">
-              <li v-if="detailPayload.tier != null">Tier {{ detailPayload.tier }}</li>
+              <li v-if="detailPayload.tier != null">名录序号 {{ detailPayload.tier }}</li>
               <li v-if="detailPayload.region">地区 {{ detailPayload.region }}</li>
-              <li v-if="detailPayload.supplierCode">编码 {{ detailPayload.supplierCode }}</li>
+              <li v-if="detailPayload.supplierCode">稳定编码 {{ detailPayload.supplierCode }}</li>
             </ul>
-            <p class="kg-detail-muted">供应关系边携带供货层级（tier），用于跨级穿透。</p>
+            <template v-if="detailPayload.features?.length">
+              <div class="kg-detail-section">节点摘要</div>
+              <ul class="kg-detail-features">
+                <li v-for="(f, i) in detailPayload.features" :key="i">{{ f }}</li>
+              </ul>
+            </template>
+            <p class="kg-detail-muted">紫色边为 §3.1 供应配套；青色边为产业链层级从属。</p>
           </div>
         </template>
         <template v-else-if="detailPayload.entityType === 'InspectionLot'">
@@ -328,9 +344,18 @@ import type {
   DashboardPartStatus,
 } from '../../types/aiAnalysis';
 import cellKgMockRaw from '../../mock/supplyChainKnowledgeGraphMock.json';
+import { buildWuhanAutoKgCatalog, type WuhanKgCatalogBundle } from '../../data/wuhanAutoKgCatalog';
 
-/** `VITE_KG_SCENARIO=bom` 时使用旧版 BOM 渐进展开演示；默认加载电芯追溯 Mock */
-const USE_CELL_TRACE_SCENARIO = import.meta.env.VITE_KG_SCENARIO !== 'bom';
+/**
+ * 图谱数据源：`wuhan`（默认，docs/sql.md 产业+供应链）、`cell`（电芯追溯演示）、`bom`（BOM 渐进展开）
+ */
+type KgScenario = 'wuhan' | 'cell' | 'bom';
+const scenario = ref<KgScenario>((import.meta.env.VITE_KG_SCENARIO ?? 'wuhan') as KgScenario);
+const SCENARIO_OPTIONS: { value: KgScenario; label: string }[] = [
+  { value: 'wuhan', label: '武汉汽车' },
+  { value: 'cell', label: '电芯追溯' },
+  { value: 'bom', label: 'BOM展开' },
+];
 
 /** el-tree 数据（与全量目录同源） */
 interface TreeNode {
@@ -390,6 +415,9 @@ export interface GraphEdgeModel {
   tier?: number;
   score?: number;
   style?: Record<string, unknown>;
+  /** 武汉产业图谱 §3.1 */
+  supplyProduct?: string;
+  supplyMode?: string;
 }
 
 function edgeStyleForRelType(relType: string | undefined): Record<string, unknown> {
@@ -679,6 +707,37 @@ function buildCellScenarioCatalog(): DashboardCatalogBundle {
   };
 }
 
+/** docs/sql.md：产业层级 + 目标二名录 + §3.1 多边供应链 */
+function buildWuhanDashboardCatalog(rawBundle: WuhanKgCatalogBundle): DashboardCatalogBundle {
+  const raw = rawBundle;
+  const nodesById = new Map<string, GraphNodeModel>();
+  for (const [k, v] of raw.nodesById.entries()) {
+    nodesById.set(k, { ...(v as object) } as GraphNodeModel);
+  }
+  const allEdges: GraphEdgeModel[] = raw.allEdges.map((re) => {
+    const meta = (re as { metadata?: { product?: string; mode?: string } }).metadata;
+    const rel = re.relType as GraphEdgeModel['relType'] | undefined;
+    return {
+      id: String(re.id),
+      source: String(re.source),
+      target: String(re.target),
+      relType: rel,
+      tier: typeof re.tier === 'number' ? re.tier : undefined,
+      score: typeof re.score === 'number' ? re.score : undefined,
+      style: (re.style as Record<string, unknown>) ?? edgeStyleForRelType(rel),
+      supplyProduct: meta?.product,
+      supplyMode: meta?.mode,
+    };
+  });
+  return {
+    rootId: raw.rootId,
+    nodesById,
+    treeChildren: raw.treeChildren,
+    allEdges,
+    treeData: raw.treeData as TreeNode[],
+  };
+}
+
 function rebuildGraphModels(
   loadedIds: Set<string>,
   nodesById: Map<string, GraphNodeModel>,
@@ -767,6 +826,7 @@ function pushPayloadFromModel(m: GraphNodeModel): void {
         tier: m.tier,
         region: m.region,
         supplierCode: m.supplierCode,
+        features: m.features,
       };
       aiStore.setDashboardGraphSelectedNode(s);
       break;
@@ -816,6 +876,8 @@ const treeHighlightKey = ref<string | null>(null);
 const riskMode = ref(false);
 
 const graphTuning = ref<KgD3GraphTuning>({ ...DEFAULT_KG_D3_TUNING });
+
+const graphHeading = ref('武汉汽车产业链 · 知识图谱');
 
 watch(
   graphTuning,
@@ -1090,23 +1152,19 @@ function teardownGraphEngine(): void {
 function mountD3Engine(w: number, h: number): void {
   const el = containerRef.value;
   if (!el) return;
+  const sc = scenario.value;
+  const hoverSelect = sc === 'wuhan' || sc === 'cell';
   d3ApiRef.value = mountKgD3ForceCanvas(el, {
     getFocusHubId: () => selectedId.value,
     getTuning: () => graphTuning.value,
     onNodeClick: (id, m) => {
-      const model = { ...m } as unknown as GraphNodeModel;
-      selectedId.value = id;
-      treeHighlightKey.value = id;
-      treeRef.value?.setCurrentKey?.(id);
-      pushPayloadFromModel(model);
-      highlightNeighborhood(id, graphDataRef.value.edges);
-      d3ApiRef.value?.refreshForces();
-      d3ApiRef.value?.focusOnNode(id);
+      if (sc === 'bom') {
+        expandNextLayer(id);
+        d3ApiRef.value?.refreshForces();
+      }
+      // wuhan/cell: 点击不响应，仅悬停交互
     },
-    onNodeDblClick: (id) => {
-      expandNextLayer(id);
-      d3ApiRef.value?.refreshForces();
-    },
+    onNodeDblClick: () => {},
     onCanvasClick: () => {
       selectedId.value = null;
       treeHighlightKey.value = null;
@@ -1117,6 +1175,12 @@ function mountD3Engine(w: number, h: number): void {
     onHover: (m, pos) => {
       if (!m || !pos) {
         hoverTip.value = null;
+        if (hoverSelect && selectedId.value != null) {
+          selectedId.value = null;
+          treeHighlightKey.value = null;
+          aiStore.setDashboardGraphSelectedNode(null);
+          highlightNeighborhood(null, graphDataRef.value.edges);
+        }
         return;
       }
       hoverTip.value = {
@@ -1134,6 +1198,14 @@ function mountD3Engine(w: number, h: number): void {
         qcStatus: m.qcStatus,
         embeddingFamily: m.embeddingFamily,
       };
+      if (hoverSelect && m.id !== selectedId.value) {
+        const model = { ...m } as unknown as GraphNodeModel;
+        selectedId.value = m.id;
+        treeHighlightKey.value = m.id;
+        treeRef.value?.setCurrentKey?.(m.id);
+        pushPayloadFromModel(model);
+        highlightNeighborhood(m.id, graphDataRef.value.edges);
+      }
     },
   });
   d3ApiRef.value.changeSize(w, h);
@@ -1145,17 +1217,26 @@ let postLayoutFitTimer: ReturnType<typeof setTimeout> | null = null;
 
 const treeData = ref<TreeNode[]>([]);
 
-onMounted(() => {
-  document.addEventListener('fullscreenchange', syncFullscreenState);
-  document.addEventListener('webkitfullscreenchange', syncFullscreenState as EventListener);
-
-  const cat = USE_CELL_TRACE_SCENARIO ? buildCellScenarioCatalog() : buildIndustrialCatalog();
+function loadScenario(s: KgScenario): void {
+  let cat: DashboardCatalogBundle;
+  if (s === 'wuhan') {
+    const wuhanRaw = buildWuhanAutoKgCatalog();
+    graphHeading.value = wuhanRaw.catalogTitle;
+    cat = buildWuhanDashboardCatalog(wuhanRaw);
+  } else if (s === 'cell') {
+    graphHeading.value = '零件·供应商 知识图谱（电芯追溯演示）';
+    cat = buildCellScenarioCatalog();
+  } else {
+    graphHeading.value = '智链 · BOM 渐进展开';
+    cat = buildIndustrialCatalog();
+  }
   catalogRef.value = cat;
   treeData.value = cat.treeData;
 
-  const loadedIds = USE_CELL_TRACE_SCENARIO
-    ? new Set<string>(cat.nodesById.keys())
-    : new Set<string>([cat.rootId]);
+  const loadedIds =
+    s === 'bom'
+      ? new Set<string>([cat.rootId])
+      : new Set<string>(cat.nodesById.keys());
   loadedNodeIdsRef.value = loadedIds;
   const initial = rebuildGraphModels(loadedIds, cat.nodesById, cat.allEdges);
   graphDataRef.value = initial;
@@ -1165,6 +1246,7 @@ onMounted(() => {
   const w = el.clientWidth || 600;
   const h = el.clientHeight || 480;
 
+  teardownGraphEngine();
   mountD3Engine(w, h);
   syncD3RiskOverlay();
 
@@ -1184,7 +1266,30 @@ onMounted(() => {
     postLayoutFitTimer = null;
     d3ApiRef.value?.focusOnNode(cat.rootId);
   }, 600);
+}
 
+function switchScenario(s: KgScenario): void {
+  if (s === scenario.value) return;
+  scenario.value = s;
+  selectedId.value = null;
+  treeHighlightKey.value = null;
+  aiStore.setDashboardGraphSelectedNode(null);
+  hoverTip.value = null;
+  riskMode.value = false;
+  leftDrawerOpen.value = false;
+  rightDrawerOpen.value = false;
+  propsDrawerOpen.value = false;
+  loadScenario(s);
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', syncFullscreenState);
+  document.addEventListener('webkitfullscreenchange', syncFullscreenState as EventListener);
+
+  loadScenario(scenario.value);
+
+  const el = containerRef.value;
+  if (!el) return;
   resizeObs = new ResizeObserver(() => {
     const box = containerRef.value;
     if (!box) return;
@@ -1324,6 +1429,45 @@ onUnmounted(() => {
   white-space: nowrap;
   line-height: 1.25;
   text-shadow: 0 1px 8px rgba(2, 6, 23, 0.9), 0 0 12px rgba(2, 6, 23, 0.65);
+}
+
+/* 场景切换按钮组 */
+.kg-scenario-switcher {
+  position: absolute;
+  top: 28px;
+  left: 10px;
+  z-index: 45;
+  display: flex;
+  gap: 4px;
+  pointer-events: auto;
+}
+
+.kg-scenario-btn {
+  margin: 0;
+  padding: 3px 8px;
+  font-size: 11px;
+  line-height: 1.3;
+  color: #64748b;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(71, 85, 105, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  backdrop-filter: blur(4px);
+  white-space: nowrap;
+}
+
+.kg-scenario-btn:hover {
+  color: #94a3b8;
+  border-color: rgba(99, 102, 241, 0.4);
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.kg-scenario-btn.is-active {
+  color: #e2e8f0;
+  background: rgba(99, 102, 241, 0.25);
+  border-color: rgba(99, 102, 241, 0.6);
+  box-shadow: 0 0 6px rgba(99, 102, 241, 0.2);
 }
 
 /* 右上角竖排操作（全屏 → 导航 → 详情 → 风险 → 属性），文案均为两字 */

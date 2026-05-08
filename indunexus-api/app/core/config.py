@@ -33,9 +33,6 @@ class Settings(BaseSettings):
     NEO4J_USER: str = "neo4j"
     NEO4J_PASSWORD: str = "indunexus123"
     
-    # 天地图 API 密钥
-    TIANDITU_API_KEY: str = ""
-    
     # JWT 配置
     SECRET_KEY: str = "your-secret-key-change-this-in-production"
     ALGORITHM: str = "HS256"

@@ -104,6 +104,8 @@ export interface DashboardGraphSupplierNodePayload {
   tier?: number;
   region?: string;
   supplierCode?: string;
+  /** 产业图谱：细分领域、配套说明等 */
+  features?: string[];
 }
 
 /** 质检批次节点载荷（管理大屏图谱） */
