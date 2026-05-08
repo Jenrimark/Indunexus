@@ -1,60 +1,82 @@
 <template>
-  <div ref="shellRef" class="kg-shell" :class="{ 'is-fullscreen': isFullscreen }">
+  <div
+    ref="shellRef"
+    class="kg-shell"
+    :class="{
+      'is-fullscreen': isFullscreen,
+      'kg-dual-right': rightDrawerOpen && propsDrawerOpen,
+      'kg-triple-right': leftDrawerOpen && rightDrawerOpen && propsDrawerOpen,
+      'kg-nav-detail-dual': leftDrawerOpen && rightDrawerOpen && !propsDrawerOpen,
+      'kg-nav-props-dual': leftDrawerOpen && propsDrawerOpen && !rightDrawerOpen,
+    }"
+  >
     <!-- 主体：工业结构图谱（全宽占用剩余空间） -->
     <div class="kg-main">
-      <button
-        v-if="!leftDrawerOpen"
-        type="button"
-        class="kg-drawer-trigger kg-drawer-trigger--left"
-        title="展开结构导航"
-        aria-expanded="false"
-        aria-controls="kg-drawer-nav"
-        @click="leftDrawerOpen = true"
-      >
-        <span class="kg-trigger-ico" aria-hidden="true">›</span>
-        <span class="kg-trigger-txt">导航</span>
-      </button>
-      <button
-        v-if="!rightDrawerOpen"
-        type="button"
-        class="kg-drawer-trigger kg-drawer-trigger--right"
-        title="展开节点详情"
-        aria-expanded="false"
-        aria-controls="kg-drawer-detail"
-        @click="rightDrawerOpen = true"
-      >
-        <span class="kg-trigger-txt">详情</span>
-        <span class="kg-trigger-ico" aria-hidden="true">‹</span>
-      </button>
-
-      <div class="kg-toolbar">
-        <label class="kg-perf-toggle">
-          <input v-model="performanceMode" type="checkbox" />
-          <span>性能模式</span>
-        </label>
-        <button type="button" class="kg-risk-btn" :class="{ on: riskMode }" @click="toggleRiskMode">
-          {{ riskMode ? '退出风险模式' : '风险模式' }}
-        </button>
+      <!-- 浮在画布之上，格式与侧栏 panel-title（圆点 + 文案）一致 -->
+      <div class="kg-heading" role="heading" aria-level="2">
+        <span class="kg-heading-dot" aria-hidden="true"></span>
+        <span class="kg-heading-text">零件·供应商 知识图谱</span>
+      </div>
+      <nav class="kg-actions" aria-label="图谱操作">
         <button
           type="button"
-          class="kg-fs-btn"
+          class="kg-action-btn kg-action-btn--fs"
           :aria-pressed="isFullscreen"
           :title="isFullscreen ? '退出全屏 (Esc)' : '全屏查看'"
           @click="toggleFullscreen"
         >
           {{ isFullscreen ? '还原' : '全屏' }}
         </button>
-        <span
-          class="kg-toolbar-hint"
-          title="Canvas 渲染；gForce 含碰撞分离；单击聚焦两跳高亮，双击渐进展开（BOM 模式）"
+        <button
+          ref="btnNavRef"
+          type="button"
+          class="kg-action-btn"
+          :class="{ 'is-active': leftDrawerOpen }"
+          :aria-pressed="leftDrawerOpen"
+          :aria-expanded="leftDrawerOpen"
+          aria-controls="kg-drawer-nav"
+          title="结构导航"
+          @click="toggleNavDrawer"
         >
-          {{
-            USE_CELL_TRACE_SCENARIO
-              ? '电芯追溯子图 · 单击聚焦两跳穿透 · 双击展开下一层（BOM 模式）'
-              : '双击节点展开下一层 · 侧栏可收起'
-          }}
-        </span>
-      </div>
+          导航
+        </button>
+        <button
+          ref="btnDetailRef"
+          type="button"
+          class="kg-action-btn"
+          :class="{ 'is-active': rightDrawerOpen }"
+          :aria-pressed="rightDrawerOpen"
+          :aria-expanded="rightDrawerOpen"
+          aria-controls="kg-drawer-detail"
+          title="节点详情"
+          @click="toggleDetailDrawer"
+        >
+          详情
+        </button>
+        <button
+          type="button"
+          class="kg-action-btn kg-action-btn--risk"
+          :class="{ 'is-on': riskMode }"
+          :aria-pressed="riskMode"
+          title="风险模式"
+          @click="toggleRiskMode"
+        >
+          风险
+        </button>
+        <button
+          ref="btnPropsRef"
+          type="button"
+          class="kg-action-btn"
+          :class="{ 'is-active': propsDrawerOpen }"
+          :aria-pressed="propsDrawerOpen"
+          :aria-expanded="propsDrawerOpen"
+          aria-controls="kg-drawer-props"
+          title="图谱属性"
+          @click="togglePropsDrawer"
+        >
+          属性
+        </button>
+      </nav>
       <div v-if="layoutPending" class="kg-loading">力导向初始化…</div>
       <div ref="containerRef" class="kg-container" />
       <div
@@ -87,28 +109,28 @@
           </div>
         </template>
       </div>
-    </div>
 
-    <!-- 左侧拉：BOM / 模组导航 -->
+    <!-- 右侧拉：结构导航（与详情、属性同一侧栏样式，展开沿停在按钮列左侧） -->
     <aside
       id="kg-drawer-nav"
-      class="kg-drawer kg-drawer--left"
+      ref="navDrawerRef"
+      class="kg-drawer kg-drawer--right kg-drawer--nav"
       :class="{ 'is-open': leftDrawerOpen }"
       :aria-hidden="!leftDrawerOpen"
+      :style="{ transformOrigin: navTransformOrigin }"
     >
       <div class="kg-drawer-head">
         <div>
           <span class="kg-drawer-title">结构导航</span>
-          <span class="kg-drawer-sub">{{ USE_CELL_TRACE_SCENARIO ? '智鉴车件 · 穿透导航' : '智链数科 · BOM' }}</span>
         </div>
         <button
           type="button"
           class="kg-drawer-close"
           title="收起"
           aria-label="收起结构导航"
-          @click="leftDrawerOpen = false"
+          @click="closeNavDrawer"
         >
-          ‹
+          ›
         </button>
       </div>
       <ElTree
@@ -127,21 +149,22 @@
     <!-- 右侧拉：节点详情（Pinia） -->
     <aside
       id="kg-drawer-detail"
-      class="kg-drawer kg-drawer--right"
+      ref="detailDrawerRef"
+      class="kg-drawer kg-drawer--right kg-drawer--detail"
       :class="{ 'is-open': rightDrawerOpen }"
       :aria-hidden="!rightDrawerOpen"
+      :style="{ transformOrigin: detailTransformOrigin }"
     >
       <div class="kg-drawer-head">
         <div>
           <span class="kg-drawer-title">节点详情</span>
-          <span class="kg-drawer-sub">单击图谱写入全局状态</span>
         </div>
         <button
           type="button"
           class="kg-drawer-close"
           title="收起"
           aria-label="收起节点详情"
-          @click="rightDrawerOpen = false"
+          @click="closeDetailDrawer"
         >
           ›
         </button>
@@ -204,14 +227,96 @@
         </template>
       </div>
     </aside>
+
+    <!-- 右侧拉：图谱属性（与详情同级，可整体收起 / 仅收起内容条） -->
+    <aside
+      id="kg-drawer-props"
+      ref="propsDrawerRef"
+      class="kg-drawer kg-drawer--right kg-drawer--props"
+      :class="{
+        'is-open': propsDrawerOpen,
+        'kg-props-full': propsDrawerOpen && !rightDrawerOpen && !leftDrawerOpen,
+      }"
+      aria-label="图谱属性"
+      :aria-hidden="!propsDrawerOpen"
+      :style="{ transformOrigin: propsTransformOrigin }"
+      @pointerdown.stop
+    >
+      <div class="kg-drawer-head">
+        <div>
+          <span class="kg-drawer-title">图谱属性</span>
+        </div>
+        <div class="kg-props-head-actions">
+          <button
+            type="button"
+            class="kg-drawer-close"
+            title="收起侧栏"
+            aria-label="收起图谱属性"
+            @click="closePropsDrawer"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+      <div class="kg-drawer-body kg-props-body" @pointerdown.stop>
+        <div class="kg-console-section">
+          <label class="kg-console-row">
+            <span class="kg-console-label">文本透明度</span>
+            <span class="kg-console-val">{{ graphTuning.labelOpacity.toFixed(2) }}</span>
+            <input v-model.number="graphTuning.labelOpacity" type="range" min="0" max="1" step="0.05" />
+          </label>
+          <label class="kg-console-row">
+            <span class="kg-console-label">节点大小</span>
+            <span class="kg-console-val">{{ graphTuning.nodeSizeScale.toFixed(2) }}</span>
+            <input v-model.number="graphTuning.nodeSizeScale" type="range" min="0.55" max="2" step="0.05" />
+          </label>
+          <label class="kg-console-row">
+            <span class="kg-console-label">连线粗细</span>
+            <span class="kg-console-val">{{ graphTuning.linkWidthScale.toFixed(2) }}</span>
+            <input v-model.number="graphTuning.linkWidthScale" type="range" min="0.5" max="3" step="0.05" />
+          </label>
+        </div>
+        <button type="button" class="kg-console-play" @click="playGraphLayoutAnimation">播放动画</button>
+        <div class="kg-console-force-block">
+          <div class="kg-console-section">
+            <label class="kg-console-row">
+              <span class="kg-console-label">图谱向心力</span>
+              <span class="kg-console-val">{{ graphTuning.centerStrength.toFixed(2) }}</span>
+              <input v-model.number="graphTuning.centerStrength" type="range" min="0" max="1" step="0.02" />
+            </label>
+            <label class="kg-console-row">
+              <span class="kg-console-label">节点排斥力</span>
+              <span class="kg-console-val">{{ graphTuning.repulsionScale.toFixed(2) }}</span>
+              <input v-model.number="graphTuning.repulsionScale" type="range" min="0.35" max="2" step="0.05" />
+            </label>
+            <label class="kg-console-row">
+              <span class="kg-console-label">连线吸引力</span>
+              <span class="kg-console-val">{{ graphTuning.linkStrengthScale.toFixed(2) }}</span>
+              <input v-model.number="graphTuning.linkStrengthScale" type="range" min="0.25" max="1.5" step="0.05" />
+            </label>
+            <label class="kg-console-row">
+              <span class="kg-console-label">连线长度</span>
+              <span class="kg-console-val">{{ Math.round(graphTuning.linkDistanceBase) }}px</span>
+              <input v-model.number="graphTuning.linkDistanceBase" type="range" min="36" max="140" step="2" />
+            </label>
+          </div>
+        </div>
+        <button type="button" class="kg-console-play" title="恢复默认参数" @click="resetGraphTuning">默认</button>
+      </div>
+    </aside>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref, shallowRef, watch, computed, nextTick } from 'vue';
 import { storeToRefs } from 'pinia';
-import G6 from '@antv/g6';
-import type { IG6GraphEvent } from '@antv/g6';
+import {
+  DEFAULT_KG_D3_TUNING,
+  mountKgD3ForceCanvas,
+  type KgD3Api,
+  type KgD3GraphTuning,
+} from './kgD3ForceCanvas';
 import { ElTree } from 'element-plus';
 import 'element-plus/es/components/tree/style/css';
 import { useAiAnalysisStore } from '../../stores/aiAnalysis';
@@ -244,26 +349,11 @@ interface DashboardCatalogBundle {
   treeData: TreeNode[];
 }
 
-function computeAdaptiveGravity(nodeCount: number, width: number, height: number): number {
-  const base = 18;
-  const area = Math.max(width * height, 1);
-  const nodesPerMp = (nodeCount * 1_000_000) / area;
-  const t = Math.min(1, Math.max(0, (nodesPerMp - 90) / 280));
-  return base + t * 11;
-}
-
-function edgeEndpointId(term: unknown): string {
-  if (term && typeof term === 'object' && 'id' in term) {
-    return String((term as { id: string }).id);
-  }
-  return String(term ?? '');
-}
-
 export interface GraphNodeModel {
   id: string;
   label: string;
   entityType: GraphEntityType;
-  /** G6 注册的绘制类型 */
+  /** Canvas 节点绘制类型（与 kgD3ForceCanvas 一致） */
   type: string;
   /** 图谱语义：root 为核心总成（初始唯一渲染节点） */
   kgType?: 'root' | 'part' | 'supplier' | 'visualCluster' | 'inspectionLot';
@@ -315,21 +405,6 @@ function edgeStyleForRelType(relType: string | undefined): Record<string, unknow
   }
 }
 
-let nodesRegistered = false;
-
-function statusRingColor(s: DashboardPartStatus | undefined): string {
-  switch (s) {
-    case 'in_stock':
-      return '#22c55e';
-    case 'low_stock':
-      return '#f59e0b';
-    case 'out_of_stock':
-      return '#ef4444';
-    default:
-      return '#94a3b8';
-  }
-}
-
 function statusLabel(s: DashboardPartStatus | undefined): string {
   switch (s) {
     case 'in_stock':
@@ -358,265 +433,6 @@ function entityTypeLabel(t: GraphEntityType): string {
   }
 }
 
-/** G6 v4 无 filterItem：对节点逐一 hide/show，语义等价于按条件过滤可见性 */
-function filterGraphItems(
-  graph: InstanceType<typeof G6.Graph>,
-  shouldHide: (nodeId: string) => boolean,
-): void {
-  graph.getNodes().forEach((node) => {
-    const id = node.getID();
-    if (shouldHide(id)) graph.hideItem(node);
-    else graph.showItem(node);
-  });
-}
-
-function registerCustomShapes(): void {
-  if (nodesRegistered) return;
-  nodesRegistered = true;
-
-  G6.registerNode(
-    'dashboard-root',
-    {
-      draw(cfg, group) {
-        const size = (cfg.size as number) || 64;
-        const r = size / 2;
-        const imgUrl = (cfg.imgUrl as string) || '';
-        const st = cfg.status as DashboardPartStatus | undefined;
-        const ring = statusRingColor(st);
-
-        const keyShape = group.addShape('circle', {
-          attrs: {
-            x: 0,
-            y: 0,
-            r: r + 5,
-            fill: '#0f172a',
-            stroke: ring,
-            lineWidth: 4,
-            shadowColor: ring,
-            shadowBlur: 14,
-          },
-          name: 'root-ring',
-        });
-
-        const innerR = r - 3;
-        const thumb = group.addShape('image', {
-          attrs: {
-            x: -innerR,
-            y: -innerR,
-            width: innerR * 2,
-            height: innerR * 2,
-            img: imgUrl,
-          },
-          name: 'thumb',
-        });
-        thumb.setClip({ type: 'circle', attrs: { r: innerR, x: 0, y: 0 } });
-
-        group.addShape('circle', {
-          attrs: {
-            x: 0,
-            y: 0,
-            r: innerR,
-            fill: 'transparent',
-            stroke: 'rgba(251,191,36,0.35)',
-            lineWidth: 1,
-          },
-          name: 'inner-ring',
-        });
-
-        return keyShape;
-      },
-    },
-    'single-node',
-  );
-
-  G6.registerNode(
-    'dashboard-part',
-    {
-      draw(cfg, group) {
-        const size = (cfg.size as number) || 52;
-        const r = size / 2;
-        const imgUrl = (cfg.imgUrl as string) || '';
-        const st = cfg.status as DashboardPartStatus | undefined;
-        const ring = statusRingColor(st);
-
-        const keyShape = group.addShape('circle', {
-          attrs: {
-            x: 0,
-            y: 0,
-            r: r + 3,
-            fill: '#0f172a',
-            stroke: ring,
-            lineWidth: 3,
-            shadowColor: ring,
-            shadowBlur: 8,
-          },
-          name: 'ring-circle',
-        });
-
-        const innerR = r - 2;
-        const thumb = group.addShape('image', {
-          attrs: {
-            x: -innerR,
-            y: -innerR,
-            width: innerR * 2,
-            height: innerR * 2,
-            img: imgUrl,
-          },
-          name: 'thumb',
-        });
-        thumb.setClip({ type: 'circle', attrs: { r: innerR, x: 0, y: 0 } });
-
-        group.addShape('circle', {
-          attrs: {
-            x: 0,
-            y: 0,
-            r: innerR,
-            fill: 'transparent',
-            stroke: 'rgba(148,163,184,0.45)',
-            lineWidth: 1,
-          },
-          name: 'inner-ring',
-        });
-
-        return keyShape;
-      },
-    },
-    'single-node',
-  );
-
-  G6.registerNode(
-    'dashboard-supplier',
-    {
-      draw(cfg, group) {
-        const r = ((cfg.size as number) || 36) / 2;
-        const keyShape = group.addShape('circle', {
-          attrs: {
-            x: 0,
-            y: 0,
-            r,
-            fill: 'rgba(30,41,59,0.95)',
-            stroke: '#818cf8',
-            lineWidth: 2,
-          },
-          name: 'supplier-body',
-        });
-        const label = ((cfg.label as string) || '供').slice(0, 2);
-        group.addShape('text', {
-          attrs: {
-            x: 0,
-            y: 0,
-            text: label,
-            fill: '#c7d2fe',
-            fontSize: 12,
-            fontWeight: 600,
-            textAlign: 'center',
-            textBaseline: 'middle',
-          },
-          name: 'supplier-txt',
-        });
-        return keyShape;
-      },
-    },
-    'single-node',
-  );
-
-  G6.registerNode(
-    'dashboard-visual-cluster',
-    {
-      draw(cfg, group) {
-        const size = (cfg.size as number) || 56;
-        const r = size / 2;
-        const keyShape = group.addShape('polygon', {
-          attrs: {
-            points: [
-              [0, -r],
-              [r * 0.92, 0],
-              [0, r],
-              [-r * 0.92, 0],
-            ],
-            fill: 'rgba(30,41,59,0.96)',
-            stroke: '#fb7185',
-            lineWidth: 2.6,
-            shadowColor: 'rgba(251,113,133,0.42)',
-            shadowBlur: 16,
-          },
-          name: 'vc-poly',
-        });
-        const code = String((cfg.clusterCode as string) || '').slice(0, 8);
-        group.addShape('text', {
-          attrs: {
-            x: 0,
-            y: 0,
-            text: code || 'VC',
-            fill: '#fecdd3',
-            fontSize: 10,
-            fontWeight: 700,
-            textAlign: 'center',
-            textBaseline: 'middle',
-          },
-          name: 'vc-txt',
-        });
-        return keyShape;
-      },
-    },
-    'single-node',
-  );
-
-  G6.registerNode(
-    'dashboard-inspection-lot',
-    {
-      draw(cfg, group) {
-        const size = (cfg.size as number) || 52;
-        const w = size * 1.15;
-        const h = size * 0.58;
-        const keyShape = group.addShape('rect', {
-          attrs: {
-            x: -w / 2,
-            y: -h / 2,
-            width: w,
-            height: h,
-            radius: 8,
-            fill: 'rgba(15,23,42,0.94)',
-            stroke: '#38bdf8',
-            lineWidth: 2,
-            shadowColor: 'rgba(56,189,248,0.28)',
-            shadowBlur: 10,
-          },
-          name: 'lot-rect',
-        });
-        const lot = String((cfg.lotNo as string) || 'LOT').slice(0, 12);
-        group.addShape('text', {
-          attrs: {
-            x: 0,
-            y: -4,
-            text: lot,
-            fill: '#e0f2fe',
-            fontSize: 9,
-            fontWeight: 600,
-            textAlign: 'center',
-            textBaseline: 'middle',
-          },
-          name: 'lot-no',
-        });
-        group.addShape('text', {
-          attrs: {
-            x: 0,
-            y: 8,
-            text: '批次',
-            fill: '#64748b',
-            fontSize: 8,
-            textAlign: 'center',
-            textBaseline: 'middle',
-          },
-          name: 'lot-sub',
-        });
-        return keyShape;
-      },
-    },
-    'single-node',
-  );
-}
-
 function buildAdjacency(edges: GraphEdgeModel[]): Map<string, Set<string>> {
   const m = new Map<string, Set<string>>();
   const add = (a: string, b: string) => {
@@ -629,52 +445,6 @@ function buildAdjacency(edges: GraphEdgeModel[]): Map<string, Set<string>> {
     add(e.source, e.target);
   }
   return m;
-}
-
-function nodesWithinTwoHops(startId: string, adj: Map<string, Set<string>>): Set<string> {
-  const ball = new Set<string>([startId]);
-  const dist = new Map<string, number>([[startId, 0]]);
-  const q: string[] = [startId];
-  while (q.length) {
-    const u = q.shift()!;
-    const du = dist.get(u)!;
-    if (du >= 2) continue;
-    for (const v of adj.get(u) || []) {
-      if (!dist.has(v)) {
-        dist.set(v, du + 1);
-        ball.add(v);
-        q.push(v);
-      }
-    }
-  }
-  return ball;
-}
-
-function highlightNeighborhood(
-  graph: InstanceType<typeof G6.Graph>,
-  nodeId: string | null,
-  edges: GraphEdgeModel[],
-): void {
-  if (!nodeId) {
-    graph.getEdges().forEach((edge) => {
-      graph.clearItemStates(edge, ['focus', 'dim']);
-    });
-    graph.getNodes().forEach((node) => graph.clearItemStates(node, ['dim']));
-    return;
-  }
-  const adj = buildAdjacency(edges);
-  const ball = nodesWithinTwoHops(nodeId, adj);
-  graph.getEdges().forEach((edge) => {
-    const m = edge.getModel() as GraphEdgeModel;
-    const hit = ball.has(m.source) && ball.has(m.target);
-    graph.clearItemStates(edge, ['focus', 'dim']);
-    graph.setItemState(edge, hit ? 'focus' : 'dim', true);
-  });
-  graph.getNodes().forEach((node) => {
-    const id = node.getID();
-    graph.clearItemStates(node, ['dim']);
-    if (!ball.has(id)) graph.setItemState(node, 'dim', true);
-  });
 }
 
 /** 构建工业图谱全量目录（默认仅 root 进入画布） */
@@ -1038,14 +808,30 @@ const shellRef = ref<HTMLElement | null>(null);
 const containerRef = ref<HTMLDivElement | null>(null);
 const isFullscreen = ref(false);
 const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
-const graphRef = shallowRef<InstanceType<typeof G6.Graph> | null>(null);
+const d3ApiRef = shallowRef<KgD3Api | null>(null);
 const layoutPending = ref(true);
 const graphDataRef = ref<{ nodes: GraphNodeModel[]; edges: GraphEdgeModel[] }>({ nodes: [], edges: [] });
 const selectedId = ref<string | null>(null);
 const treeHighlightKey = ref<string | null>(null);
-const performanceMode = ref(false);
 const riskMode = ref(false);
-const buildLayoutRef = ref<((w: number, h: number) => Record<string, unknown>) | null>(null);
+
+const graphTuning = ref<KgD3GraphTuning>({ ...DEFAULT_KG_D3_TUNING });
+
+watch(
+  graphTuning,
+  () => {
+    d3ApiRef.value?.applyTuning();
+  },
+  { deep: true },
+);
+
+function resetGraphTuning(): void {
+  Object.assign(graphTuning.value, DEFAULT_KG_D3_TUNING);
+}
+
+function playGraphLayoutAnimation(): void {
+  d3ApiRef.value?.playLayoutAnimation();
+}
 
 const catalogRef = ref<DashboardCatalogBundle | null>(null);
 const loadedNodeIdsRef = ref<Set<string>>(new Set());
@@ -1071,81 +857,128 @@ const { dashboardGraphSelectedNode } = storeToRefs(aiStore);
 
 const detailPayload = computed(() => dashboardGraphSelectedNode.value);
 
-/** 侧拉：左 BOM 默认收起；右详情默认展开（与图谱并列浏览） */
+/** 侧拉：默认全部收起，只有点击对应按钮才展开 */
 const leftDrawerOpen = ref(false);
-const rightDrawerOpen = ref(true);
+const rightDrawerOpen = ref(false);
+const propsDrawerOpen = ref(false);
+const btnNavRef = ref<HTMLButtonElement | null>(null);
+const btnDetailRef = ref<HTMLButtonElement | null>(null);
+const btnPropsRef = ref<HTMLButtonElement | null>(null);
+const navDrawerRef = ref<HTMLElement | null>(null);
+const detailDrawerRef = ref<HTMLElement | null>(null);
+const propsDrawerRef = ref<HTMLElement | null>(null);
 
-let clickTimer: ReturnType<typeof setTimeout> | null = null;
+/** 自按钮中心的「Dock」缩放锚点（右侧边 % + 垂直 %） */
+const navTransformOrigin = ref('100% 50%');
+const detailTransformOrigin = ref('100% 50%');
+const propsTransformOrigin = ref('100% 50%');
 
-function clearClickTimer(): void {
-  if (clickTimer != null) {
-    clearTimeout(clickTimer);
-    clickTimer = null;
+function computeDrawerAnchor(btn: HTMLElement, drawerEl: HTMLElement): string {
+  const br = btn.getBoundingClientRect();
+  const dr = drawerEl.getBoundingClientRect();
+  if (dr.height < 4) return '100% 50%';
+  const midY = br.top + br.height / 2;
+  let pct = ((midY - dr.top) / dr.height) * 100;
+  pct = Math.min(99, Math.max(1, pct));
+  return `100% ${pct}%`;
+}
+
+function toggleNavDrawer(ev: MouseEvent): void {
+  const opening = !leftDrawerOpen.value;
+  if (opening) {
+    propsDrawerOpen.value = false;
+    leftDrawerOpen.value = true;
+    const btn = (ev.currentTarget as HTMLElement) ?? btnNavRef.value;
+    nextTick(() => {
+      const d = navDrawerRef.value;
+      if (btn && d) navTransformOrigin.value = computeDrawerAnchor(btn, d);
+    });
+  } else {
+    leftDrawerOpen.value = false;
   }
 }
 
-function applyRiskVisualStates(graph: InstanceType<typeof G6.Graph>, enabled: boolean): void {
-  graph.getNodes().forEach((n) => {
-    graph.clearItemStates(n, ['riskHot', 'riskPath']);
-  });
-  graph.getEdges().forEach((e) => {
-    graph.clearItemStates(e, ['riskHot']);
-  });
-
-  if (!enabled) return;
-
-  const cat = catalogRef.value;
-  const rootId = cat?.rootId;
-  if (!cat || !rootId) return;
-
-  const { nodes, edges } = graphDataRef.value;
-  const loaded = new Set(nodes.map((x) => x.id));
-  const keep = computeRiskKeepSet(rootId, edges, loaded);
-
-  for (const id of loaded) {
-    const item = graph.findById(id);
-    if (!item) continue;
-    const m = cat.nodesById.get(id);
-    const isAbnormalPart = m?.entityType === 'Part' && m.status && m.status !== 'in_stock';
-    if (isAbnormalPart) graph.setItemState(item, 'riskHot', true);
-    else if (keep.has(id) && id !== rootId) graph.setItemState(item, 'riskPath', true);
-  }
-
-  graph.getEdges().forEach((edge) => {
-    const em = edge.getModel() as GraphEdgeModel;
-    if (keep.has(em.source) && keep.has(em.target)) {
-      const sAb =
-        cat.nodesById.get(em.source)?.entityType === 'Part' &&
-        cat.nodesById.get(em.source)?.status !== 'in_stock';
-      const tAb =
-        cat.nodesById.get(em.target)?.entityType === 'Part' &&
-        cat.nodesById.get(em.target)?.status !== 'in_stock';
-      if (sAb || tAb) graph.setItemState(edge, 'riskHot', true);
-    }
-  });
+function closeNavDrawer(): void {
+  leftDrawerOpen.value = false;
 }
 
-/** 渐进展开后若处于风险模式，按新可见节点重算过滤与高亮 */
-function refreshRiskOverlay(): void {
-  if (!riskMode.value) return;
-  const graph = graphRef.value;
+function toggleDetailDrawer(ev: MouseEvent): void {
+  const opening = !rightDrawerOpen.value;
+  if (opening) {
+    propsDrawerOpen.value = false;
+    rightDrawerOpen.value = true;
+    const btn = (ev.currentTarget as HTMLElement) ?? btnDetailRef.value;
+    nextTick(() => {
+      const d = detailDrawerRef.value;
+      if (btn && d) detailTransformOrigin.value = computeDrawerAnchor(btn, d);
+    });
+  } else {
+    rightDrawerOpen.value = false;
+  }
+}
+
+function closeDetailDrawer(): void {
+  rightDrawerOpen.value = false;
+}
+
+function togglePropsDrawer(ev: MouseEvent): void {
+  const opening = !propsDrawerOpen.value;
+  if (opening) {
+    leftDrawerOpen.value = false;
+    rightDrawerOpen.value = false;
+    propsDrawerOpen.value = true;
+    const btn = (ev.currentTarget as HTMLElement) ?? btnPropsRef.value;
+    nextTick(() => {
+      const d = propsDrawerRef.value;
+      if (btn && d) propsTransformOrigin.value = computeDrawerAnchor(btn, d);
+    });
+  } else {
+    propsDrawerOpen.value = false;
+  }
+}
+
+function closePropsDrawer(): void {
+  propsDrawerOpen.value = false;
+}
+
+function highlightNeighborhood(nodeId: string | null, edges: GraphEdgeModel[]): void {
+  d3ApiRef.value?.setHighlightCenter(nodeId, edges as never);
+}
+
+function syncD3RiskOverlay(): void {
+  const d3 = d3ApiRef.value;
+  if (!d3) return;
+  if (!riskMode.value) {
+    d3.setRiskMode(false, null);
+    return;
+  }
   const cat = catalogRef.value;
   const rootId = cat?.rootId;
-  const bl = buildLayoutRef.value;
-  if (!graph || graph.get('destroyed') || !cat || !rootId || !bl) return;
-
+  if (!cat || !rootId) {
+    d3.setRiskMode(false, null);
+    return;
+  }
   const { nodes, edges } = graphDataRef.value;
   const loaded = new Set(nodes.map((n) => n.id));
   const abnormalExists = [...loaded].some((id) => {
     const m = cat.nodesById.get(id);
     return m?.entityType === 'Part' && m.status && m.status !== 'in_stock';
   });
-  if (!abnormalExists) return;
-
+  if (!abnormalExists) {
+    d3.setRiskMode(false, null);
+    return;
+  }
   const keep = computeRiskKeepSet(rootId, edges, loaded);
-  filterGraphItems(graph, (id) => !keep.has(id));
-  applyRiskVisualStates(graph, true);
-  graph.updateLayout(bl(graph.get('width') as number, graph.get('height') as number));
+  d3.setRiskMode(true, {
+    rootId,
+    keepIds: keep,
+    nodesById: cat.nodesById as never,
+  });
+}
+
+/** 渐进展开后若处于风险模式，按新可见节点重算 D3 风险叠加 */
+function refreshRiskOverlay(): void {
+  syncD3RiskOverlay();
 }
 
 function syncFullscreenState(): void {
@@ -1178,9 +1011,6 @@ async function toggleFullscreen(): Promise<void> {
 }
 
 function toggleRiskMode(): void {
-  const graph = graphRef.value;
-  if (!graph || graph.get('destroyed')) return;
-
   const cat = catalogRef.value;
   const rootId = cat?.rootId;
   if (!cat || !rootId) return;
@@ -1188,13 +1018,11 @@ function toggleRiskMode(): void {
   riskMode.value = !riskMode.value;
 
   if (!riskMode.value) {
-    filterGraphItems(graph, () => false);
-    applyRiskVisualStates(graph, false);
-    graph.updateLayout(buildLayoutRef.value!(graph.get('width') as number, graph.get('height') as number));
+    syncD3RiskOverlay();
     return;
   }
 
-  const { nodes, edges } = graphDataRef.value;
+  const { nodes } = graphDataRef.value;
   const loaded = new Set(nodes.map((n) => n.id));
   const abnormalExists = [...loaded].some((id) => {
     const m = cat.nodesById.get(id);
@@ -1203,17 +1031,14 @@ function toggleRiskMode(): void {
 
   if (!abnormalExists) {
     riskMode.value = false;
+    syncD3RiskOverlay();
     return;
   }
 
-  const keep = computeRiskKeepSet(rootId, edges, loaded);
-  filterGraphItems(graph, (id) => !keep.has(id));
-  applyRiskVisualStates(graph, true);
-
-  graph.updateLayout(buildLayoutRef.value!(graph.get('width') as number, graph.get('height') as number));
+  syncD3RiskOverlay();
 }
 
-function expandNextLayer(graph: InstanceType<typeof G6.Graph>, hubId: string): void {
+function expandNextLayer(hubId: string): void {
   const cat = catalogRef.value;
   if (!cat) return;
   const next = cat.treeChildren.get(hubId);
@@ -1231,272 +1056,92 @@ function expandNextLayer(graph: InstanceType<typeof G6.Graph>, hubId: string): v
 
   const built = rebuildGraphModels(loaded, cat.nodesById, cat.allEdges);
   graphDataRef.value = built;
-  graph.changeData(built as unknown as Parameters<InstanceType<typeof G6.Graph>['changeData']>[0]);
 
-  const w = graph.get('width') as number;
-  const h = graph.get('height') as number;
-  const bl = buildLayoutRef.value;
-  if (bl) graph.updateLayout(bl(w, h));
+  d3ApiRef.value?.setData(built.nodes as never[], built.edges as never[]);
+  d3ApiRef.value?.refreshForces();
+  d3ApiRef.value?.focusOnNode(hubId);
 
   refreshRiskOverlay();
-
-  const hubItem = graph.findById(hubId);
-  if (hubItem) {
-    graph.focusItem(hubItem, true, {
-      easing: 'easeCubic',
-      duration: 420,
-    });
-  }
 }
 
 function onTreeNodeClick(data: TreeNode): void {
-  const graph = graphRef.value;
   treeHighlightKey.value = data.id;
-  if (!graph || graph.get('destroyed')) return;
-  const item = graph.findById(data.id);
-  if (!item) return;
-  const m = item.getModel() as unknown as GraphNodeModel;
+  const mCat = catalogRef.value?.nodesById.get(data.id);
+  if (!mCat) return;
   selectedId.value = data.id;
-  pushPayloadFromModel(m);
-  graph.getNodes().forEach((n) => graph.clearItemStates(n, ['selected']));
-  graph.setItemState(item, 'selected', true);
-  highlightNeighborhood(graph, data.id, graphDataRef.value.edges);
-  graph.focusItem(item, true, { easing: 'easeCubic', duration: 380 });
+  pushPayloadFromModel(mCat);
+  highlightNeighborhood(data.id, graphDataRef.value.edges);
+  d3ApiRef.value?.refreshForces();
+  d3ApiRef.value?.focusOnNode(data.id);
 }
 
-function createGraph(
-  width: number,
-  height: number,
-): {
-  graph: InstanceType<typeof G6.Graph>;
-  buildLayout: (w: number, h: number) => Record<string, unknown>;
-} {
-  registerCustomShapes();
-  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
-  const pixelRatio = Math.min(performanceMode.value ? 1 : 2, dpr);
-
-  const graphBox: { instance: InstanceType<typeof G6.Graph> | null } = { instance: null };
-  let focusHubId: string | null = null;
-
-  function buildDynamicGForceLayout(w: number, h: number) {
-    const cx = w / 2;
-    const cy = h / 2;
-    const nodeCount = graphDataRef.value.nodes.length;
-    const adj = buildAdjacency(graphDataRef.value.edges);
-    const neighborsOfHub = focusHubId ? adj.get(focusHubId) ?? new Set<string>() : new Set<string>();
-    const baseNodeStrength = 2600;
-    const outsiderStrengthMul = 1.38;
-    const collideStrength = 1.45;
-    const preventOverlap = true;
-    const adaptiveGravity = computeAdaptiveGravity(nodeCount, w, h);
-    const gravity = preventOverlap && collideStrength >= 1.2 ? adaptiveGravity : 18;
-    const perf = performanceMode.value;
-    const magneticG = 58 * (gravity / 18);
-
-    return {
-      type: 'gForce' as const,
-      gpuEnabled: false,
-      width: w,
-      height: h,
-      center: [cx, cy] as [number, number],
-      nodeStrength: (d: { id: string }) => {
-        if (!focusHubId) return baseNodeStrength;
-        if (d.id === focusHubId || neighborsOfHub.has(d.id)) return baseNodeStrength;
-        return baseNodeStrength * outsiderStrengthMul;
-      },
-      coulombDisScale: 0.0042,
-      factor: 1,
-      linkDistance: (_e: unknown, s: { id: string }, t: { id: string }) => {
-        const normal = 68;
-        const tight = 24;
-        if (!focusHubId) return normal;
-        const a = s.id;
-        const b = t.id;
-        const isHubNeighborEdge =
-          (a === focusHubId && neighborsOfHub.has(b)) || (b === focusHubId && neighborsOfHub.has(a));
-        return isHubNeighborEdge ? tight : normal;
-      },
-      edgeStrength: (edge: { source?: unknown; target?: unknown }) => {
-        const base = 140;
-        const pull = 380;
-        if (!focusHubId) return base;
-        const sid = edgeEndpointId(edge.source);
-        const tid = edgeEndpointId(edge.target);
-        const isHubNeighborEdge =
-          (sid === focusHubId && neighborsOfHub.has(tid)) || (tid === focusHubId && neighborsOfHub.has(sid));
-        return isHubNeighborEdge ? pull : base;
-      },
-      getCenter: (node: { id: string }) => {
-        const gi = graphBox.instance;
-        if (!gi || !focusHubId) return undefined as unknown as number[];
-        const hubItem = gi.findById(focusHubId);
-        const hm = hubItem?.getModel() as { x?: number; y?: number };
-        if (!hm || typeof hm.x !== 'number' || typeof hm.y !== 'number') return undefined as unknown as number[];
-        if (node.id === focusHubId) return [cx, cy, gravity];
-        if (neighborsOfHub.has(node.id)) return [hm.x, hm.y, magneticG];
-        return undefined as unknown as number[];
-      },
-      gravity,
-      preventOverlap,
-      collideStrength,
-      nodeSpacing: 12,
-      damping: perf ? 0.92 : 0.86,
-      maxSpeed: perf ? 900 : 480,
-      minMovement: perf ? 2.4 : 0.32,
-      interval: perf ? 0.05 : 0.022,
-      maxIteration: perf ? 700 : 4500,
-      workerEnabled: false,
-      animate: !perf,
-    };
+function teardownGraphEngine(): void {
+  if (postLayoutFitTimer != null) {
+    clearTimeout(postLayoutFitTimer);
+    postLayoutFitTimer = null;
   }
+  d3ApiRef.value?.destroy();
+  d3ApiRef.value = null;
+  if (containerRef.value) {
+    containerRef.value.innerHTML = '';
+  }
+}
 
-  const g = new G6.Graph({
-    container: containerRef.value!,
-    width,
-    height,
-    pixelRatio,
-    renderer: 'canvas',
-    layout: buildDynamicGForceLayout(width, height),
-    modes: {
-      default: ['drag-canvas', 'zoom-canvas', 'drag-node'],
-    },
-    defaultNode: {
-      type: 'circle',
-      style: { lineWidth: 0 },
-    },
-    defaultEdge: {
-      type: 'line',
-      style: {
-        stroke: 'rgba(148,163,184,0.35)',
-        lineWidth: 1,
-        endArrow: false,
-      },
-    },
-    edgeStateStyles: {
-      focus: {
-        stroke: '#38bdf8',
-        lineWidth: 2.2,
-        shadowColor: 'rgba(56,189,248,0.45)',
-        shadowBlur: 6,
-      },
-      dim: {
-        stroke: 'rgba(51,65,85,0.22)',
-        lineWidth: 0.6,
-      },
-      riskHot: {
-        stroke: '#fb7185',
-        lineWidth: 2.6,
-        shadowColor: 'rgba(251,113,133,0.45)',
-        shadowBlur: 8,
-      },
-    },
-    nodeStateStyles: {
-      selected: {
-        shadowColor: '#a5b4fc',
-        shadowBlur: 18,
-      },
-      dim: {
-        opacity: 0.34,
-        fillOpacity: 0.4,
-      },
-      riskHot: {
-        shadowColor: '#fb7185',
-        shadowBlur: 22,
-      },
-      riskPath: {
-        shadowColor: '#fbbf24',
-        shadowBlur: 12,
-      },
-    },
-  });
-
-  graphBox.instance = g;
-
-  g.on('node:click', (ev: IG6GraphEvent) => {
-    const item = ev.item;
-    if (!item || item.getType?.() !== 'node') return;
-    clearClickTimer();
-    clickTimer = window.setTimeout(() => {
-      clickTimer = null;
-      const id = item.getID();
-      const m = item.getModel() as unknown as GraphNodeModel;
+function mountD3Engine(w: number, h: number): void {
+  const el = containerRef.value;
+  if (!el) return;
+  d3ApiRef.value = mountKgD3ForceCanvas(el, {
+    getFocusHubId: () => selectedId.value,
+    getTuning: () => graphTuning.value,
+    onNodeClick: (id, m) => {
+      const model = { ...m } as unknown as GraphNodeModel;
       selectedId.value = id;
       treeHighlightKey.value = id;
       treeRef.value?.setCurrentKey?.(id);
-      pushPayloadFromModel(m);
-      g.getNodes().forEach((n) => g.clearItemStates(n, ['selected']));
-      g.setItemState(item, 'selected', true);
-      highlightNeighborhood(g, id, graphDataRef.value.edges);
-      focusHubId = id;
-      if (!performanceMode.value) {
-        g.updateLayout(buildDynamicGForceLayout(g.get('width') as number, g.get('height') as number));
+      pushPayloadFromModel(model);
+      highlightNeighborhood(id, graphDataRef.value.edges);
+      d3ApiRef.value?.refreshForces();
+      d3ApiRef.value?.focusOnNode(id);
+    },
+    onNodeDblClick: (id) => {
+      expandNextLayer(id);
+      d3ApiRef.value?.refreshForces();
+    },
+    onCanvasClick: () => {
+      selectedId.value = null;
+      treeHighlightKey.value = null;
+      aiStore.setDashboardGraphSelectedNode(null);
+      highlightNeighborhood(null, graphDataRef.value.edges);
+      d3ApiRef.value?.refreshForces();
+    },
+    onHover: (m, pos) => {
+      if (!m || !pos) {
+        hoverTip.value = null;
+        return;
       }
-      g.focusItem(item, true, {
-        easing: 'easeCubic',
-        duration: 400,
-      });
-    }, 280);
+      hoverTip.value = {
+        x: pos.x + 10,
+        y: pos.y - 10,
+        label: m.label,
+        entityType: m.entityType as GraphEntityType,
+        entityLabel: entityTypeLabel(m.entityType as GraphEntityType),
+        status: m.status as DashboardPartStatus | undefined,
+        features: m.features ?? [],
+        tier: m.tier,
+        lotNo: m.lotNo,
+        lineCode: m.lineCode,
+        clusterCode: m.clusterCode,
+        qcStatus: m.qcStatus,
+        embeddingFamily: m.embeddingFamily,
+      };
+    },
   });
-
-  g.on('node:dblclick', (ev: IG6GraphEvent) => {
-    const item = ev.item;
-    if (!item || item.getType?.() !== 'node') return;
-    clearClickTimer();
-    const id = item.getID();
-    expandNextLayer(g, id);
-    focusHubId = id;
-    if (!performanceMode.value) {
-      g.updateLayout(buildDynamicGForceLayout(g.get('width') as number, g.get('height') as number));
-    }
-  });
-
-  g.on('canvas:click', () => {
-    clearClickTimer();
-    selectedId.value = null;
-    treeHighlightKey.value = null;
-    aiStore.setDashboardGraphSelectedNode(null);
-    g.getNodes().forEach((n) => g.clearItemStates(n, ['selected']));
-    highlightNeighborhood(g, null, graphDataRef.value.edges);
-    focusHubId = null;
-    if (!performanceMode.value) {
-      g.updateLayout(buildDynamicGForceLayout(g.get('width') as number, g.get('height') as number));
-    }
-  });
-
-  g.on('node:mouseenter', (ev: IG6GraphEvent) => {
-    const item = ev.item;
-    if (!item || item.getType?.() !== 'node') return;
-    const m = item.getModel() as unknown as GraphNodeModel;
-    const wrap = containerRef.value?.getBoundingClientRect();
-    const oe = ev.originalEvent as MouseEvent | undefined;
-    if (!wrap || !oe) return;
-    hoverTip.value = {
-      x: oe.clientX - wrap.left + 10,
-      y: oe.clientY - wrap.top - 10,
-      label: m.label,
-      entityType: m.entityType,
-      entityLabel: entityTypeLabel(m.entityType),
-      status: m.status,
-      features: m.features ?? [],
-      tier: m.tier,
-      lotNo: m.lotNo,
-      lineCode: m.lineCode,
-      clusterCode: m.clusterCode,
-      qcStatus: m.qcStatus,
-      embeddingFamily: m.embeddingFamily,
-    };
-  });
-
-  g.on('node:mouseleave', () => {
-    hoverTip.value = null;
-  });
-
-  return { graph: g, buildLayout: buildDynamicGForceLayout };
+  d3ApiRef.value.changeSize(w, h);
+  d3ApiRef.value.setData(graphDataRef.value.nodes as never[], graphDataRef.value.edges as never[]);
 }
 
 let resizeObs: ResizeObserver | null = null;
 let postLayoutFitTimer: ReturnType<typeof setTimeout> | null = null;
-let stopPerformanceWatch: (() => void) | null = null;
 
 const treeData = ref<TreeNode[]>([]);
 
@@ -1520,12 +1165,8 @@ onMounted(() => {
   const w = el.clientWidth || 600;
   const h = el.clientHeight || 480;
 
-  const { graph, buildLayout } = createGraph(w, h);
-  graphRef.value = graph;
-  buildLayoutRef.value = buildLayout;
-
-  graph.data(initial as unknown as Parameters<InstanceType<typeof G6.Graph>['data']>[0]);
-  graph.render();
+  mountD3Engine(w, h);
+  syncD3RiskOverlay();
 
   treeHighlightKey.value = cat.rootId;
   const rootModel = cat.nodesById.get(cat.rootId);
@@ -1535,34 +1176,22 @@ onMounted(() => {
     treeRef.value?.setCurrentKey?.(cat.rootId);
   });
 
-  stopPerformanceWatch = watch(performanceMode, () => {
-    const g = graphRef.value;
-    const bl = buildLayoutRef.value;
-    if (!g || g.get('destroyed') || !bl) return;
-    g.updateLayout(bl(g.get('width') as number, g.get('height') as number));
-  });
-
   requestAnimationFrame(() => {
     layoutPending.value = false;
   });
 
   postLayoutFitTimer = window.setTimeout(() => {
     postLayoutFitTimer = null;
-    if (!graph.get('destroyed')) {
-      graph.fitView(40);
-    }
-  }, 1200);
+    d3ApiRef.value?.focusOnNode(cat.rootId);
+  }, 600);
 
   resizeObs = new ResizeObserver(() => {
-    const g = graphRef.value;
     const box = containerRef.value;
-    if (!g || !box) return;
+    if (!box) return;
     const nw = box.clientWidth;
     const nh = box.clientHeight;
     if (nw < 10 || nh < 10) return;
-    g.changeSize(nw, nh);
-    g.updateLayout(buildLayout(nw, nh));
-    g.fitView(36);
+    d3ApiRef.value?.changeSize(nw, nh);
   });
   resizeObs.observe(el);
 });
@@ -1571,18 +1200,9 @@ onUnmounted(() => {
   document.removeEventListener('fullscreenchange', syncFullscreenState);
   document.removeEventListener('webkitfullscreenchange', syncFullscreenState as EventListener);
 
-  clearClickTimer();
-  stopPerformanceWatch?.();
-  stopPerformanceWatch = null;
-  buildLayoutRef.value = null;
-  if (postLayoutFitTimer != null) {
-    clearTimeout(postLayoutFitTimer);
-    postLayoutFitTimer = null;
-  }
+  teardownGraphEngine();
   resizeObs?.disconnect();
   resizeObs = null;
-  graphRef.value?.destroy();
-  graphRef.value = null;
 });
 </script>
 
@@ -1593,8 +1213,14 @@ onUnmounted(() => {
   min-height: 0;
   min-width: 0;
   width: 100%;
-  margin-bottom: 56px;
+  margin-bottom: 0;
   overflow: hidden;
+  /* 仅调整按钮用：右缘内边距。侧栏位置用下面 rail，勿混用。 */
+  --kg-edge-inset: 10px;
+  /* 侧栏右缘定位（与按钮独立，勿为对齐按钮而改此值） */
+  --kg-action-rail-width: 68px;
+  /* 导航与详情同时展开时，两框之间的竖缝 */
+  --kg-nav-detail-gap: 12px;
 }
 
 .kg-shell.is-fullscreen {
@@ -1608,7 +1234,7 @@ onUnmounted(() => {
   height: 100%;
   margin-bottom: 0;
   box-sizing: border-box;
-  padding: 10px 12px 14px;
+  padding: 0;
   background: #020617;
 }
 
@@ -1619,7 +1245,7 @@ onUnmounted(() => {
   height: 100%;
   margin-bottom: 0;
   box-sizing: border-box;
-  padding: 10px 12px 14px;
+  padding: 0;
   background: #020617;
 }
 
@@ -1630,100 +1256,292 @@ onUnmounted(() => {
 }
 
 .kg-main {
+  --kg-graph-gutter: 2px;
   position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding: 10px 12px 12px;
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.45);
-  border: 1px solid rgba(99, 102, 241, 0.22);
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: none;
   box-sizing: border-box;
+  isolation: isolate;
+  z-index: 0;
+  /* 收起侧栏时裁掉滑出区域，避免残影（悬浮提示尽量放在画布中部） */
+  overflow: hidden;
 }
 
-.kg-drawer-trigger {
+/* 叠在画布之上、标题与按钮之下，与大屏圆角一致 */
+.kg-main::after {
+  content: '';
   position: absolute;
-  top: 50%;
-  z-index: 35;
-  transform: translateY(-50%);
-  display: inline-flex;
+  inset: 0;
+  /* 低于侧栏(30+)与按钮(45)，仅压住画布 */
+  z-index: 24;
+  pointer-events: none;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 1px solid rgba(99, 102, 241, 0.38);
+}
+
+.kg-shell.is-fullscreen .kg-main::after,
+.kg-shell:-webkit-full-screen .kg-main::after {
+  border-radius: 0;
+}
+
+/* 图谱上方浮层标题：透明底，仅圆点 + 文案（与侧栏 panel-title 同级别） */
+.kg-heading {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 45;
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 8px;
-  border-radius: 0 10px 10px 0;
-  border: 1px solid rgba(99, 102, 241, 0.45);
-  background: rgba(15, 23, 42, 0.92);
-  color: #a5b4fc;
-  font-size: 11px;
-  cursor: pointer;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
-  transition: background 0.2s, border-color 0.2s;
+  pointer-events: none;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  font-size: 12px;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
 }
 
-.kg-drawer-trigger:hover {
-  background: rgba(49, 46, 129, 0.55);
+.kg-heading-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #6366f1;
+  box-shadow: 0 0 6px #6366f1;
+  flex-shrink: 0;
+}
+
+.kg-heading-text {
+  white-space: nowrap;
+  line-height: 1.25;
+  text-shadow: 0 1px 8px rgba(2, 6, 23, 0.9), 0 0 12px rgba(2, 6, 23, 0.65);
+}
+
+/* 右上角竖排操作（全屏 → 导航 → 详情 → 风险 → 属性），文案均为两字 */
+.kg-actions {
+  position: absolute;
+  /* 与侧栏顶对齐（.kg-drawer top） */
+  top: 8px;
+  right: var(--kg-edge-inset);
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.kg-action-btn {
+  margin: 0;
+  padding: 7px 10px;
+  min-width: 52px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  border: 1px solid rgba(129, 140, 248, 0.45);
+  background: rgba(15, 23, 42, 0.92);
+  color: #c7d2fe;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.kg-action-btn:hover {
   border-color: #818cf8;
+  background: rgba(49, 46, 129, 0.55);
   color: #e0e7ff;
 }
 
-.kg-drawer-trigger--left {
-  left: 0;
+.kg-action-btn.is-active {
+  border-color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.28);
+  color: #e0e7ff;
 }
 
-.kg-drawer-trigger--right {
-  right: 0;
-  border-radius: 10px 0 0 10px;
-  flex-direction: row;
+.kg-action-btn--fs[aria-pressed='true'] {
+  border-color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.22);
+  color: #e0e7ff;
 }
 
-.kg-trigger-ico {
-  font-size: 14px;
-  font-weight: 700;
-  opacity: 0.95;
+.kg-action-btn--risk {
+  border-color: rgba(251, 113, 133, 0.45);
+  color: #fda4af;
 }
 
-.kg-trigger-txt {
-  letter-spacing: 0.06em;
+.kg-action-btn--risk:hover {
+  border-color: #fb7185;
+  background: rgba(251, 113, 133, 0.12);
+  color: #fecaca;
+}
+
+.kg-action-btn--risk.is-on {
+  border-color: #fbbf24;
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.12);
 }
 
 .kg-drawer {
   position: absolute;
   top: 8px;
   bottom: 8px;
+  /* 导航 / 详情 / 属性统一宽度 */
   width: min(300px, 88vw);
-  z-index: 40;
+  right: calc(var(--kg-action-rail-width) + 5px);
+  /* 必须低于 .kg-actions(45)，抽屉已移入 kg-main 与按钮同一叠层 */
+  z-index: 30;
   display: flex;
   flex-direction: column;
   border-radius: 10px;
   background: rgba(15, 23, 42, 0.97);
   border: 1px solid rgba(99, 102, 241, 0.38);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  pointer-events: none;
   overflow: hidden;
+  pointer-events: none;
+  transform-origin: 100% 50%;
+  backface-visibility: hidden;
+  /* 收起：完全不可见；展开：自 transformOrigin（对齐触发按钮）缩放滑入 */
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(calc(100% + 36px), 0, 0) scale(0.82);
+  transition:
+    transform 0.34s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.22s ease,
+    visibility 0s linear 0.34s;
 }
 
 .kg-drawer.is-open {
   pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    transform 0.34s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.2s ease,
+    visibility 0s linear 0s;
 }
 
-.kg-drawer--left {
-  left: 10px;
-  transform: translateX(calc(-100% - 24px));
+@media (prefers-reduced-motion: reduce) {
+  .kg-drawer {
+    transition-duration: 0.12s;
+  }
 }
 
-.kg-drawer--left.is-open {
-  transform: translateX(0);
+.kg-drawer--detail,
+.kg-drawer--nav {
+  z-index: 31;
 }
 
-.kg-drawer--right {
-  right: 10px;
-  transform: translateX(calc(100% + 24px));
+.kg-drawer--props {
+  z-index: 30;
 }
 
-.kg-drawer--right.is-open {
-  transform: translateX(0);
+/* 仅详情 + 属性双开（无导航）：与导航+详情同款上下半区 + 缝 */
+.kg-shell.kg-dual-right:not(.kg-triple-right) .kg-drawer--detail.is-open {
+  top: 8px;
+  bottom: auto;
+  height: calc(50% - 8px - var(--kg-nav-detail-gap) / 2);
+  max-height: none;
+}
+
+.kg-shell.kg-dual-right:not(.kg-triple-right) .kg-drawer--props.is-open {
+  top: calc(50% + var(--kg-nav-detail-gap) / 2);
+  bottom: 8px;
+  max-height: none;
+}
+
+/* 导航 + 详情（无属性）：上下各半区，中间留缝避免叠在一起 */
+.kg-shell.kg-nav-detail-dual .kg-drawer--nav.is-open {
+  top: 8px;
+  bottom: auto;
+  height: calc(50% - 8px - var(--kg-nav-detail-gap) / 2);
+  max-height: none;
+}
+
+.kg-shell.kg-nav-detail-dual .kg-drawer--detail.is-open {
+  top: calc(50% + var(--kg-nav-detail-gap) / 2);
+  bottom: 8px;
+  max-height: none;
+}
+
+/* 导航 + 属性（无详情）：与导航+详情同款 */
+.kg-shell.kg-nav-props-dual .kg-drawer--nav.is-open {
+  top: 8px;
+  bottom: auto;
+  height: calc(50% - 8px - var(--kg-nav-detail-gap) / 2);
+  max-height: none;
+}
+
+.kg-shell.kg-nav-props-dual .kg-drawer--props.is-open {
+  top: calc(50% + var(--kg-nav-detail-gap) / 2);
+  bottom: 8px;
+  max-height: none;
+}
+
+/* 导航 + 详情 + 属性 三开：三段高度 */
+.kg-shell.kg-triple-right .kg-drawer--nav.is-open {
+  top: 8px;
+  bottom: auto;
+  max-height: min(28vh, 340px);
+}
+
+.kg-shell.kg-triple-right .kg-drawer--detail.is-open {
+  top: calc(8px + min(28vh, 340px) + 8px);
+  bottom: auto;
+  max-height: min(34vh, 400px);
+}
+
+.kg-shell.kg-triple-right .kg-drawer--props.is-open {
+  top: auto;
+  bottom: 8px;
+  max-height: min(34vh, 400px);
+}
+
+/* 属性独占展开：外框与导航/详情全高一致（顶底各 8px） */
+.kg-drawer--props.is-open.kg-props-full {
+  top: 8px;
+  bottom: 8px;
+  max-height: none;
+}
+
+.kg-props-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.kg-props-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  font-size: 11px;
+  color: #cbd5e1;
+  padding: 14px 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.kg-props-body .kg-console-section {
+  gap: 14px;
+}
+
+.kg-props-body .kg-console-row {
+  gap: 6px 10px;
 }
 
 .kg-drawer-head {
@@ -1742,13 +1560,6 @@ onUnmounted(() => {
   font-weight: 600;
   color: #cbd5e1;
   letter-spacing: 0.04em;
-}
-
-.kg-drawer-sub {
-  display: block;
-  font-size: 10px;
-  color: #64748b;
-  margin-top: 4px;
 }
 
 .kg-drawer-close {
@@ -1798,96 +1609,83 @@ onUnmounted(() => {
   color: #e0e7ff;
 }
 
-.kg-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-.kg-risk-btn {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  border: 1px solid rgba(251, 113, 133, 0.45);
-  background: rgba(30, 41, 59, 0.9);
-  color: #fda4af;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.kg-risk-btn:hover {
-  border-color: #fb7185;
-  background: rgba(251, 113, 133, 0.12);
-}
-
-.kg-risk-btn.on {
-  border-color: #fbbf24;
-  color: #fde68a;
-  background: rgba(251, 191, 36, 0.1);
-}
-
-.kg-fs-btn {
-  padding: 4px 12px;
-  border-radius: 6px;
-  font-size: 11px;
-  cursor: pointer;
-  border: 1px solid rgba(129, 140, 248, 0.45);
-  background: rgba(30, 41, 59, 0.9);
-  color: #c7d2fe;
-  transition: background 0.2s, border-color 0.2s;
-}
-
-.kg-fs-btn:hover {
-  border-color: #818cf8;
-  background: rgba(99, 102, 241, 0.18);
-  color: #e0e7ff;
-}
-
-.kg-fs-btn[aria-pressed='true'] {
-  border-color: #a5b4fc;
-  background: rgba(99, 102, 241, 0.22);
-  color: #e0e7ff;
-}
-
-.kg-perf-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: #cbd5e1;
-  cursor: pointer;
-  user-select: none;
-}
-
-.kg-perf-toggle input {
-  accent-color: #818cf8;
-}
-
-.kg-toolbar-hint {
-  font-size: 11px;
-  color: #64748b;
-  margin-left: auto;
-}
-
 .kg-container {
-  flex: 1;
-  min-height: 260px;
-  width: 100%;
-  border-radius: 8px;
+  position: relative;
+  z-index: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  margin: var(--kg-graph-gutter);
+  width: auto;
+  align-self: stretch;
+  border-radius: 0;
   background: radial-gradient(ellipse 70% 55% at 50% 40%, rgba(30, 58, 138, 0.12), transparent 60%);
+}
+
+.kg-console-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kg-console-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 4px 8px;
+  align-items: center;
+}
+
+.kg-console-label {
+  color: #94a3b8;
+}
+
+.kg-console-val {
+  font-variant-numeric: tabular-nums;
+  color: #a5b4fc;
+  font-size: 10px;
+}
+
+.kg-console-row input[type='range'] {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 4px;
+  accent-color: #818cf8;
+  cursor: pointer;
+}
+
+.kg-console-play {
+  width: 100%;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(99, 102, 241, 0.55);
+  color: #e0e7ff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}
+
+.kg-console-play:hover {
+  background: rgba(129, 140, 248, 0.65);
+}
+
+.kg-console-force-block {
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid rgba(51, 65, 85, 0.55);
 }
 
 .kg-loading {
   position: absolute;
-  inset: 0;
-  top: 52px;
+  inset: var(--kg-graph-gutter);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 4;
+  z-index: 34;
   font-size: 12px;
   color: #94a3b8;
   letter-spacing: 0.04em;
@@ -1898,7 +1696,7 @@ onUnmounted(() => {
 
 .kg-tooltip {
   position: absolute;
-  z-index: 8;
+  z-index: 46;
   min-width: 140px;
   max-width: 260px;
   padding: 10px 12px;

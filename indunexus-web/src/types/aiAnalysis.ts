@@ -83,7 +83,7 @@ export interface SupplyChainData {
   leadTimeDays: number;
 }
 
-/** 管理大屏 / G6 图谱：零件在库状态（外圈颜色） */
+/** 管理大屏知识图谱：零件在库状态（外圈颜色） */
 export type DashboardPartStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'pending';
 
 /** 点击图谱节点写入 Pinia 的零件载荷 */
